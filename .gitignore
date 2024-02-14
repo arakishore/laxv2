@@ -1,0 +1,32 @@
+# Ignore compiled files
+*.class
+*.jar
+*.war
+
+# Ignore logs and temp files
+logs/
+temp/
+
+# Ignore IDE-specific files
+.idea/
+.vscode/
+
+# Ignore all ZIP files
+*.zip
+# Ignore all txt files
+*.txt
+# Ignore all files within the 'excelreports' folder and its subdirectories
+excelreports/**
+# Ignore all files within the 'logs' folder and its subdirectories
+logs/**
+# Ignore all files within the 'todo' folder and its subdirectories
+todo/**
+# Ignore all files within the 'libphp-phpmailer' folder and its subdirectories
+libphp-phpmailer/**
+
+# Ignore all files within the 'config' folder and its subdirectories
+config/**
+# Ignore all files within the 'assets' folder and its subdirectories
+assets/**
+# Ignore all files within the 'vendor' folder and its subdirectories
+vendor/**
