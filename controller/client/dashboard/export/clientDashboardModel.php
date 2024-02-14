@@ -2625,74 +2625,6 @@ return setErrorStack($returnArr, -1, $res, null);
 
 
 
-function ExportwithholdingUnAssignedv5(
-    $table,
-
-    $conn,
-    $offset = null,
-    $resultsPerPage = 10,
-    $search = '',
-    $client = null
-) {
-    $res = array();
-    $returnArr = array();
-    $whereClause = "";
-    if ($client == null) {
-        $client = $_SESSION['client'];
-    }
-
-    $getClientInfoQueryResult = runQuery("SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))", $conn);
-    if (!noError($getClientInfoQueryResult)) {
-        return setErrorStack($returnArr, 3, $getClientInfoQueryResult["errMsg"], null);
-    }
-//SELECT T1.assetID,label,youtube_video_claim_report3_nd1_2020_12.asset_label,youtube_video_claim_report3_nd1_2020_12.asset_id FROM `youtube_video_claim_report_nd1_2020_12` as T1  INNER JOIN youtube_video_claim_report3_nd1_2020_12 ON T1.assetID=youtube_video_claim_report3_nd1_2020_12.asset_id  where T1.content_owner IS NULL  group by T1.assetID INTO OUTFILE '/var/lib/mysql-files/youtube_video_claim_report/missinglablesinv2.csv' FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n'
-    //$sql = "INTO OUTFILE '/var/lib/mysql-files/nonassignedcontentowners/missinglablesinv2.csv' FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n'";
-    //@unlink("/var/lib/mysql-files/nonassignedcontentowners/{$table}.csv");
-
-    //@chmod("/var/lib/mysql-files/nonassignedcontentowners", 0777);
-
-    $insertTableQuery = "SELECT 'id' , 'AdSense_Earnings_Month' , 'Channel_ID','Revenue Source' , 'Local_Currency' , 'Total_Channel_Revenue' , 'US_Sourced_Revenue' , 'Tax_Withholding_Rate' , 'Tax_Withheld_Amount' , 'content_owner'
-	UNION ALL SELECT `id` , `AdSense_Earnings_Month` , `Channel_ID` , `Revenue_Source` , `Local_Currency` , `Total_Channel_Revenue` , `US_Sourced_Revenue` , `Tax_Withholding_Rate` , `Tax_Withheld_Amount` , `content_owner` FROM {$table}   where ({$table}.content_owner IS NULL  or {$table}.content_owner ='' ) group by {$table}.assetID INTO OUTFILE '/var/lib/mysql-files/nonassignedcontentowners/{$table}.csv' FIELDS TERMINATED BY ',' ENCLOSED BY '\"' LINES TERMINATED BY '\\n' ;";
-
-    @unlink("polo_export.txt");
-    file_put_contents("polo_export.txt", $insertTableQuery);
-    @chmod("polo_export.txt", 0777);
-
-    $insertTableQueryResult = runQuery($insertTableQuery, $conn);
-
-    die();
-    /*
-$gettotalcountquery = "SELECT count(id) as totalcount FROM $table where   (content_owner IS NULL  || content_owner ='')";
-$gettotalcountquery = runQuery($gettotalcountquery, $conn);
-if (!noError($gettotalcountquery)) {
-return setErrorStack($returnArr, 3, $gettotalcountquery["errMsg"], null);
-}
-$gettotalcounts = mysqli_fetch_assoc($gettotalcountquery["dbResource"]);
-$gettotalcounts = $gettotalcounts['totalcount'];
-
-$youtubereport = "SELECT  video_id,channel_id,video_title,asset_id ,Label  FROM $table   where (content_owner IS NULL  || content_owner ='')   ";
-
-$youtubereportresult = runQuery($youtubereport, $conn);
-$cdata  = [];
-while ($row2 = mysqli_fetch_assoc($youtubereportresult["dbResource"])) {
-
-$res['data'][] =  [
-'video_id'=>$row2['video_id'],
-'channel_id'=>$row2['channel_id'],
-'asset_id'=>$row2['asset_id'],
-'video_title'=>$row2['video_title'],
-'Label'=>$row2['Label'],
-
-];
-
-}
-
-$res['total']=$gettotalcounts;
-
-return setErrorStack($returnArr, -1, $res, null);
- */
-}
-
 function ExportClientsYoutubeUnAssignedv2(
     $table,
 
@@ -2819,140 +2751,6 @@ function ExportActivateCommonReportv3(
             'gst_percentage' => isset($row2['gst_percentage']) ? $row2['gst_percentage'] : '0',
             'final_payable_with_gst' => isset($row2['final_payable_with_gst']) ? $row2['final_payable_with_gst'] : '0',
             'status' => isset($row2['status']) ? $row2['status'] : 'N/A',
-        ];
-    }
-
-    $res['total'] = $gettotalcounts;
-    // print_r($res);
-    return setErrorStack($returnArr, -1, $res, null);
-}
-
-
-function ExportActivateCommonReportv10(
-    $table_type_name,
-    $conn,
-    $offset = null,
-    $resultsPerPage = 10,
-    $search = '',
-    $client = null
-) {
-    $gettotalcounts = 0;
-    $res = array();
-    $returnArr = array();
-    $whereClause = "";
-
-    $gettotalcountquery = "select  count('') as totalcount  from {$table_type_name}	";
-
-    $gettotalcountquery = runQuery($gettotalcountquery, $conn);
-    if (!noError($gettotalcountquery)) {
-        return setErrorStack($returnArr, 3, $gettotalcountquery["errMsg"], null);
-    }
-    $gettotalcounts = mysqli_fetch_assoc($gettotalcountquery["dbResource"]);
-
-    $gettotalcounts = $gettotalcounts['totalcount'];
-
-    $row = [];
-    //$youtubereport = "SELECT   main.*,gst_per from {$table_type_name} as main , crep_cms_clients ccc WHERE main.content_owner=ccc.client_username";
-    $youtubereport = "SELECT   * from {$table_type_name}";
-    if ($offset !== null) {
-        $youtubereport .= " LIMIT {$offset}, {$resultsPerPage}";
-    }
-
-    if (!empty($search)) {
-        $youtubereport .= ' and video_title like "' . $search . '%"  ';
-    }
-   
-   
-
-    $youtubereportresult = runQuery($youtubereport, $conn);
-    $cdata = [];
-    while ($row2 = mysqli_fetch_assoc($youtubereportresult["dbResource"])) {
-        // $row2['payout']=number_format($r['partnerRevenue'],2);
-        // $row2['final_payable']=number_format($r['partnerRevenue'] * $rev_share,2) ;
-          //  $final_payable = $row2["final_payable"];
-          //  $gst_percentage = $row2["gst_percentage"];
-         //   $final_payable_wth_gst = $final_payable + ($final_payable * $gst_percentage /100);
-          //  $final_payable_wth_gst = number_format($final_payable_wth_gst,2,'.','');
-          
-        $res['data'][] = [
-            'content_owner' => isset($row2['content_owner']) ? $row2['content_owner'] : 'N/A',
-            'total_amt_recd' => isset($row2['total_amt_recd']) ? $row2['total_amt_recd'] : 'N/A',
-            'shares' => isset($row2['shares']) ? $row2['shares'] : 'N/A',
-            'amt_payable' => isset($row2['amt_payable']) ? $row2['amt_payable'] : 'N/A',
-            'us_payout' => isset($row2['us_payout']) ? $row2['us_payout'] : 'N/A',
-            'us_payout_youtube' => '',
-            'holding_percentage' => isset($row2['holding_percentage']) ? $row2['holding_percentage'] : '0',
-            'witholding' => isset($row2['witholding']) ? $row2['witholding'] : 'N/A',
-            'witholding_youtube' => '',
-            'Difference' => '',
-            'Prev_Adjust' => '',
-            'final_payable' => isset($row2['final_payable']) ? $row2['final_payable'] : 'N/A',
-            'gst_percentage' => isset($row2['gst_percentage']) ? $row2['gst_percentage'] : '0',
-            'final_payable_with_gst' => isset($row2['final_payable_with_gst']) ? $row2['final_payable_with_gst'] : '0',
-            'status' => isset($row2['status']) ? $row2['status'] : 'N/A',
-        ];
-    }
-
-    $res['total'] = $gettotalcounts;
-    // print_r($res);
-    return setErrorStack($returnArr, -1, $res, null);
-}
-
-
-function ExportWhpreportv10(
-    $table_type_name,
-    $conn,
-    $client = null,
-    $offset = null,
-    $resultsPerPage = 10
-    
-) {
-    $gettotalcounts = 0;
-    $res = array();
-    $returnArr = array();
-    $whereClause = "";
-
-    $gettotalcountquery = "select  count('') as totalcount  from {$table_type_name}	";
-
-    $gettotalcountquery = runQuery($gettotalcountquery, $conn);
-    if (!noError($gettotalcountquery)) {
-        return setErrorStack($returnArr, 3, $gettotalcountquery["errMsg"], null);
-    }
-    $gettotalcounts = mysqli_fetch_assoc($gettotalcountquery["dbResource"]);
-
-    $gettotalcounts = $gettotalcounts['totalcount'];
-
-    $row = [];
-    //$youtubereport = "SELECT   main.*,gst_per from {$table_type_name} as main , crep_cms_clients ccc WHERE main.content_owner=ccc.client_username";
-    $youtubereport = "SELECT   * from {$table_type_name} where content_owner ='{$client }'";
-    if ($offset !== null) {
-        $youtubereport .= " LIMIT {$offset}, {$resultsPerPage}";
-    }
-
-  
-    // echo "<br>sql :::::  ". $youtubereport;
-    $youtubereportresult = runQuery($youtubereport, $conn);
-    $cdata = [];
-    while ($row2 = mysqli_fetch_assoc($youtubereportresult["dbResource"])) {
-        // $row2['payout']=number_format($r['partnerRevenue'],2);
-        // $row2['final_payable']=number_format($r['partnerRevenue'] * $rev_share,2) ;
-          //  $final_payable = $row2["final_payable"];
-          //  $gst_percentage = $row2["gst_percentage"];
-         //   $final_payable_wth_gst = $final_payable + ($final_payable * $gst_percentage /100);
-          //  $final_payable_wth_gst = number_format($final_payable_wth_gst,2,'.','');
-          
-        $res['data'][] = [
-            
-            'AdSense_Earnings_Month' => isset($row2['AdSense_Earnings_Month']) ? $row2['AdSense_Earnings_Month'] : 'N/A',
-            'Channel_ID' => isset($row2['Channel_ID']) ? $row2['Channel_ID'] : 'N/A',
-            'Revenue_Source' => isset($row2['Revenue_Source']) ? $row2['Revenue_Source'] : 'N/A',
-            'Local_Currency' => isset($row2['Local_Currency']) ? $row2['Local_Currency'] : 'N/A',
-            'Total_Channel_Revenue' => isset($row2['Total_Channel_Revenue']) ? $row2['Total_Channel_Revenue'] : 'N/A',
-            'US_Sourced_Revenue' => isset($row2['US_Sourced_Revenue']) ? $row2['US_Sourced_Revenue'] : 'N/A',
-            'Tax_Withholding_Rate' => isset($row2['Tax_Withholding_Rate']) ? $row2['Tax_Withholding_Rate'] : 'N/A',
-            'Tax_Withheld_Amount' => isset($row2['Tax_Withheld_Amount']) ? $row2['Tax_Withheld_Amount'] : 'N/A',
-            'content_owner' => isset($row2['content_owner']) ? $row2['content_owner'] : 'N/A',
-            
         ];
     }
 
@@ -6373,7 +6171,7 @@ function ExportClientsAppleMusicReportv2(
                 $rev_share = 30;
                 $gst_percentage = 0;
                 $holding_percentage = 0;
-                $getshare = "SELECT  shares , gst_percentage , holding_percentage   FROM 	report_audio_activation_{$nd_type}_{$year_mnoth} where content_owner = '" . $client . "'";
+                $getshare = "SELECT  shares , gst_percentage , holding_percentage   FROM 	youtube_video_claim_activation_report_{$nd_type}_{$year_mnoth} where content_owner = '" . $client . "'";
             
                 $getshareres = runQuery($getshare, $conn);
                 if (!noError($getshareres)) {
@@ -6632,7 +6430,7 @@ function ExportClientsItuneMusicReportv2(
                 $rev_share = 30;
                 $gst_percentage = 0;
                 $holding_percentage = 0;
-                $getshare = "SELECT  shares , gst_percentage , holding_percentage   FROM 	report_audio_activation_{$nd_type}_{$year_mnoth} where content_owner = '" . $client . "'";
+                $getshare = "SELECT  shares , gst_percentage , holding_percentage   FROM 	youtube_video_claim_activation_report_{$nd_type}_{$year_mnoth} where content_owner = '" . $client . "'";
             
                 $getshareres = runQuery($getshare, $conn);
                 if (!noError($getshareres)) {
@@ -7095,7 +6893,7 @@ function ExportClientsGaanaMusicReportv2(
                 $rev_share = 30;
                 $gst_percentage = 0;
                 $holding_percentage = 0;
-                $getshare = "SELECT  shares , gst_percentage , holding_percentage   FROM 	report_audio_activation_{$nd_type}_{$year_mnoth} where content_owner = '" . $client . "'";
+                $getshare = "SELECT  shares , gst_percentage , holding_percentage   FROM 	youtube_video_claim_activation_report_{$nd_type}_{$year_mnoth} where content_owner = '" . $client . "'";
             
                 $getshareres = runQuery($getshare, $conn);
                 if (!noError($getshareres)) {
@@ -7338,7 +7136,7 @@ function ExportClientsSaavanMusicReportv2(
                 $rev_share = 30;
                 $gst_percentage = 0;
                 $holding_percentage = 0;
-                $getshare = "SELECT  shares , gst_percentage , holding_percentage   FROM 	report_audio_activation_{$nd_type}_{$year_mnoth} where content_owner = '" . $client . "'";
+                $getshare = "SELECT  shares , gst_percentage , holding_percentage   FROM 	youtube_video_claim_activation_report_{$nd_type}_{$year_mnoth} where content_owner = '" . $client . "'";
             
                 $getshareres = runQuery($getshare, $conn);
                 if (!noError($getshareres)) {
@@ -7592,42 +7390,42 @@ function ExportClientsSpotifyMusicReportv2(
              $gst_percentage = 0;
              $holding_percentage = 0;
              
-             $getshare = "SELECT  shares , gst_percentage , holding_percentage   FROM 	report_audio_activation_{$nd_type}_{$year_mnoth} where content_owner = '" . $client . "'";
+        //      $getshare = "SELECT  shares , gst_percentage , holding_percentage   FROM 	youtube_video_claim_activation_report_{$nd_type}_{$year_mnoth} where content_owner = '" . $client . "'";
          
-             $getshareres = runQuery($getshare, $conn);
-             if (!noError($getshareres)) {
-                //  @unlink("polo_export_getshare.txt");
-                $ddd = "Error_in_query: ".PHP_EOL. $getshare.PHP_EOL.$getshareres["errMsg"].PHP_EOL;
-                file_put_contents("polo_export_getshare.txt", $ddd,FILE_APPEND);
-                @chmod("polo_export_getshare.txt", 0777);
+        //      $getshareres = runQuery($getshare, $conn);
+        //      if (!noError($getshareres)) {
+        //         //  @unlink("polo_export_getshare.txt");
+        //         $ddd = "Error_in_query: ".PHP_EOL. $getshare.PHP_EOL.$getshareres["errMsg"].PHP_EOL;
+        //         file_put_contents("polo_export_getshare.txt", $ddd,FILE_APPEND);
+        //         @chmod("polo_export_getshare.txt", 0777);
 
-                // return setErrorStack($returnArr, 3, $getshareres["errMsg"], null);
-            }   
-            else {
-              $getshareresdata = mysqli_fetch_assoc($getshareres["dbResource"]);
+        //         // return setErrorStack($returnArr, 3, $getshareres["errMsg"], null);
+        //     }   
+        //     else {
+        //       $getshareresdata = mysqli_fetch_assoc($getshareres["dbResource"]);
       
-                  if (!empty($getshareresdata)) {
+        //           if (!empty($getshareresdata)) {
                   
-                      $rev_share = $getshareresdata['shares'];
-                      $gst_percentage = $getshareresdata['gst_percentage'];
-                      $holding_percentage = $getshareresdata['holding_percentage'];
-                  }
-          }
+        //               $rev_share = $getshareresdata['shares'];
+        //               $gst_percentage = $getshareresdata['gst_percentage'];
+        //               $holding_percentage = $getshareresdata['holding_percentage'];
+        //           }
+        //   }
 
            
 
             if (!empty($search)) {
                 
-                $union_final_query[] = " ( SELECT  id, Country,Product,URI,UPC,EAN,ISRC,Track_name,Artist_name,Composer_name,Album_name,Quantity,Label  , sum(Payable_USD) as Total_Revenue , {$rev_share} as rev_share, {$gst_percentage} as gst_percentage, {$holding_percentage} as holding_percentage 
+                $union_final_query[] = " ( Country,Product,URI,UPC,EAN,ISRC,Track_name,Artist_name,Composer_name,Album_name,Quantity,Label  , sum(Payable_USD) as Total_Revenue , {$rev_share} as rev_share, {$gst_percentage} as gst_percentage, {$holding_percentage} as holding_percentage 
                     FROM $v
 
                 where  {$v}.content_owner = '{$client}' and  ISRC like '" . $search . "%'   )  ";
             } else {
 
                 
-                $union_final_query[] = "   ( SELECT  id, Country,Product,URI,UPC,EAN,ISRC,Track_name,Artist_name,Composer_name,Album_name,Quantity,Label ,  sum(Payable_USD) as Total_Revenue  , {$rev_share} as rev_share, {$gst_percentage} as gst_percentage, {$holding_percentage} as holding_percentage 
+                $union_final_query[] = "   ( SELECT   Country,Product,URI,UPC,EAN,ISRC,Track_name,Artist_name,Composer_name,Album_name,Quantity,Label ,  sum(Payable_USD) as Total_Revenue  , {$rev_share} as rev_share, {$gst_percentage} as gst_percentage, {$holding_percentage} as holding_percentage 
                 FROM $v 
-                where  {$v}.content_owner = '{$client}'   group by id )  ";
+                where  {$v}.content_owner = '{$client}'   )  ";
             }
         }
 
@@ -7667,7 +7465,7 @@ function ExportClientsSpotifyMusicReportv2(
 
         $finalpayable =  (($row2['Total_Revenue'] * $rev_share) / 100) + 0;
         $final_payable_wth_gst = $finalpayable + ($finalpayable * $gst_per /100);
-      
+     
 
         $res['data'][] = [
             'Country' => isset($row2['Country']) ? $row2['Country'] : 'N/A',
@@ -7682,7 +7480,7 @@ function ExportClientsSpotifyMusicReportv2(
             'Album_name' => isset($row2['Album_name']) ? $row2['Album_name'] : 'N/A',
             'Quantity' => isset($row2['Quantity']) ? $row2['Quantity'] : 'N/A',
             'Label' => isset($row2['Label']) ? $row2['Label'] : 'N/A',
-            'FinalPayable' =>  $finalpayable,
+            'FinalPayable' => (($row2['Total_Revenue'] * $rev_share) / 100) + 0,
             'gst_per' => $gst_per,
             'finalpayable_gst' => $final_payable_wth_gst,
         ];
@@ -8038,7 +7836,6 @@ function getRevenueStatsreport($data=array()){
     $res_final['gst_percentage'] = 0;
     $res_final['holding_percentage'] = 0;
     $res_final['final_payable_with_gst'] = 0;
-    $res_final['witholding_tablename'] = array();
    $counter=0;
     foreach($data as $k=>$value){
         $counter = $counter+1;
@@ -8052,8 +7849,6 @@ function getRevenueStatsreport($data=array()){
         $res_final['holding_percentage'] =  $res_final['holding_percentage'] + $value['holding_percentage'];
         $res_final['gst_percentage'] =  $res_final['gst_percentage'] + $value['gst_per'];
         $res_final['shares'] =  $res_final['shares'] + $value['rev_share'];
-        $res_final['witholding_tablename'][$value['witholding_tablename']] = $value['witholding_tablename'];
-
         
     }
      

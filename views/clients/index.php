@@ -102,7 +102,7 @@ if (!noError($conn)) {
                 if (isset($_GET['page']) && !empty($_GET["page"])) {
                     $page = preg_replace('#[^0-9]#i', '', $_GET['page']);
                 }
-                $resultsPerPage = RESULTSPERPAGE;
+                $resultsPerPage = 2;
                 $offset = ($page - 1) * $resultsPerPage;
                 
                 $logMsg = "Attempting to get count of all clients.";

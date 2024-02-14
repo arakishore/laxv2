@@ -11,6 +11,7 @@ require_once(__ROOT__.'/config/auth.php');
 //include necessary models
 require_once(__ROOT__.'/model/reports/reportsModel.php');
 require_once(__ROOT__.'/model/validate/validateModel.php');
+require_once(__ROOT__.'/model/reports/youtubeClaimReportsModel.php');
 
 //TO DO: Logs
 

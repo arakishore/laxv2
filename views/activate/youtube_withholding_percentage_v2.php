@@ -461,7 +461,7 @@
             if(file_exists('../../excelreports/'.$fileis)){?>
         <a href='../../excelreports/<?=$fileis?>'>Download zip</a>
         <?php }
-        ?>
+        ?><span class="text-mutes-sm">Please Export again for latest file</span> 
             </div>
             <div class="card-content">
 

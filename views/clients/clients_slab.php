@@ -335,6 +335,25 @@ if (!noError($conn)) {
     <link href='https://fonts.googleapis.com/css?family=Work+Sans:400,300,700' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="<?php echo $rootUrl; ?>assets/css/style.css">
     <script src="<?php echo $rootUrl; ?>assets/js/jquery.min.js" type="text/javascript"></script>
+    <style>
+        #formshare .form-control {
+            height: 30px!important;
+            padding: 2px 0!important;
+            font-size: 14px!important;
+            line-height: 1.42857!important;
+        }
+      #formshare  .table>thead>tr>th, .table>tbody>tr>th, .table>tfoot>tr>th, .table>thead>tr>td, .table>tbody>tr>td, .table>tfoot>tr>td {
+            padding: 2px 2px!important;
+            vertical-align: middle;
+        }
+        fieldset.scheduler-border {
+    border: 1px groove #ddd !important;
+    padding: 0 1.4em 1.4em 1.4em !important;
+    margin: 0 0 1.5em 0 !important;
+    -webkit-box-shadow: 0px 0px 0px 0px #000;
+    box-shadow: 0px 0px 0px 0px #000;
+}
+    </style>
 </head>
 
 <body>
@@ -465,7 +484,7 @@ if (!noError($conn)) {
                                                 <th>Client Username</th>
                                                 <th>Client Name</th>
                                                
-                                                <th>Share Structure</th>
+                                                <th>Share Youtube Structure</th>
                                                 
                                                 <?php
                                                 //if user has write access, show Actions col
@@ -480,26 +499,58 @@ if (!noError($conn)) {
                                         <tbody>
                                             <?php
                                              
-                                            foreach($allClientsInfo as $clientEmail=>$clientDetails){ 
+                                            foreach($allClientsInfo as $clientEmail => $clientDetails){ 
+
+                                                $getClientsSlabInfo = getClientsSlab(
+                                                    $conn,
+                                                    $clientDetails["client_username"]
+                                                );
+
+                                                if (!noError($getClientsSlabInfo)) {
+
+                                                   
+                                                } else {
+                                                   
+                                                }
+
                                             ?>
                                             <tr>
                                                 <td><?php echo $clientDetails["client_username"]; ?></td>
                                                 <td><?php echo $clientDetails["client_firstname"]; ?></td>
-                                                
-                                                <td>
-                                                    
-                                            </td>
-                                                
-                                                <?php
-                                                //if user has write access, show Actions col
-                                                if ($userHighestPermOnPage == 2) {
+                                                <td> <?php
+                                                    if(!empty($getClientsSlabInfo["errMsg"])){
+                                                        $getClientsSlabInfo = $getClientsSlabInfo["errMsg"];
+
+                                                     
                                                 ?>
+                                                <table class="table">
+                
+                    <tbody>
+                    <?php
+                    foreach($getClientsSlabInfo as $key => $shareInfo){ 
+                       // print_r($shareInfo);
+                    ?>
+                    <tr>
+                         
+                         
+                        <td>From <?php echo (isset($shareInfo['from_amt'])) ? $shareInfo['from_amt'] : '';?></td>
+                        <td>Upto <?php echo (isset($shareInfo['to_amt'])) ? $shareInfo['to_amt'] : '';?></td>
+                        <td><?php echo (isset($shareInfo['percentage'])) ? $shareInfo['percentage'] : '';?>%</td>
+                    </tr>
+                    <?php }?>
+                </tbody>
+            </table>
+            <?php }?>
+                                                  </td>
+                                                
+                                                 
                                                     <td> 
-                                                         
+                                                    <a href="javascript:void(0);"    class="ls-modal btn btn-xs btn-success" onclick="showAddClientForm('<?php echo htmlentities(trim($clientDetails['client_username'])); ?>', 'Percentage Share for <?php echo $clientDetails['client_username']?>');"
+                                                        >
+                                                            <span class="fa fa-edit"></span>
+                                                        </a> 
                                                     </td>
-                                                <?php
-                                                }
-                                                ?>
+                                                
                                             </tr>
                                             <?php
                                             }
@@ -675,7 +726,7 @@ if (!noError($conn)) {
             {
                 $("#addClientModal .modal-title span").html(actionType);
                 $("#addClientModal .modal-body-content").load(
-                    "<?php echo $rootUrl; ?>views/clients/manage/?userName="+encodeURIComponent(userName)
+                    "<?php echo $rootUrl; ?>views/clients/manage/manageslab.php?userName="+encodeURIComponent(userName)
                 );
                 $("#addClientModal").modal();
             }
@@ -683,6 +734,7 @@ if (!noError($conn)) {
            {
                location.href="<?php echo $rootUrl;?>views/dashboard/client/?userName="+encodeURIComponent(userName)
            }
+           
         </script> 
 </body>
 

@@ -185,7 +185,7 @@ $userHighestPermOnPage = -1;
                         </h4>
                     </div>
                     <div id="manageClientSubItems" class="panel-collapse collapse 
-                     <?php echo in_array($pageTitle, array('Manage Clients','Mapping with Amazon','Co-Mapping','Manage Slab'))?'in':''; ?>"> 
+                     <?php echo in_array($pageTitle, array('Manage Clients','Mapping with Amazon','Co-Mapping','Make Client Group','Manage Slab'))?'in':''; ?>"> 
                         <ul class="list-group">
                             <?php
                             if (array_key_exists("ManageClients", $subModulesWithAccess)) {
@@ -224,6 +224,23 @@ $userHighestPermOnPage = -1;
                                     </a>
                                 </li>
                                 <?php
+                                        $selectedTab = "";
+                                        if ($pageTitle=='Make Client Group') {   
+                                            $selectedTab = "selected-tab";
+                                            $userHighestPermOnPage = "2";//$subModulesWithAccess["ManageClients"];
+                                        }
+                                        ?>
+                                <li class="navlink2 <?php echo $selectedTab; ?>">
+                                    <a href="<?php echo $rootUrl; ?>views/clients/slab_client_group.php">
+                                        <i>
+                                            <img src="<?php echo $rootUrl; ?>assets/img/sidebar/manageClients.png">
+                                        </i>
+                                        <p class="<?php echo ($pageTitle == 'Make Client Group')?'para-new':''; ?>">
+                                        Make Client Group
+                                        </p>
+                                    </a>
+                                </li>
+                                <?php
                                 $selectedTab2 = "";
                                 if ($pageTitle=='Manage Slab') {
                                     $selectedTab2 = "selected-tab";
@@ -231,7 +248,7 @@ $userHighestPermOnPage = -1;
                                 }
                                 ?>
                                 <li class="navlink2 <?php echo $selectedTab2; ?> ">
-                                    <a href="<?php echo $rootUrl; ?>views/clients/clients_slab.php">
+                                    <a href="<?php echo $rootUrl; ?>views/clients/clients_slab_group.php">
                                         <i>
                                             <img src="<?php echo $rootUrl; ?>assets/img/sidebar/manageClients.png">
                                         </i>
@@ -572,7 +589,7 @@ $userHighestPermOnPage = -1;
                             </h4>
                         </div>
                             <div id="ImportReportsSubItems" class="panel-collapse collapse 
-                            <?php echo in_array($pageTitle, array('Import Reports', 'Validate Reports','Activate Reports','Assign Content Owner','Export Revenue Assets-id','Revenue Report Video-id'))?'in':''; ?>"> 
+                            <?php echo in_array($pageTitle, array('Import Reports', 'Validate Reports','Activate Reports','Activate Slab','Assign Content Owner','Export Revenue Assets-id','Revenue Report Video-id'))?'in':''; ?>"> 
                                 <ul class="list-group">
                                     <?php
                                     if (array_key_exists("ImportReports", $subModulesWithAccess)) {
@@ -631,9 +648,31 @@ $userHighestPermOnPage = -1;
                                                 </p>
                                             </a>
                                         </li>
+                                       
+                                     
+                                    
+                                        <?php
+                                        $selectedTab = "";
+                                        if ($pageTitle=='Activate Slab') {   
+                                            $selectedTab = "selected-tab";
+                                            
+                                        }
+                                        ?>
+                                        <li class="navlink2 <?php echo $selectedTab; ?>">
+                                            <a href="<?php echo $rootUrl; ?>views/activate/slab_activate.php">
+                                                <i>
+                                                    <img src="<?php echo $rootUrl; ?>assets/img/sidebar/uploadMis.png">
+                                                </i>
+                                                <p class="<?php echo ($pageTitle == 'Activate Slab')?'para-new':''; ?>">
+                                                Activate Slab
+                                                </p>
+                                            </a>
+                                        </li>
                                     <?php 
                                     }
-                                    
+                                    ?>
+
+                                    <?php
                                      if (array_key_exists("ValidateReports", $subModulesWithAccess)) {
                                         $selectedTab = "";
                                         if ($pageTitle=='Assign Content Owner') {   
