@@ -317,7 +317,7 @@ body.loading .modal {
             <?php foreach ($getallchennels as $key => $value) {
                 $value['tablename'] = ($value['tablename']=="redmusic") ? "Youtube Music" : $value['tablename'];
                 ?>
-            <option value="<?=$value['channelID'];?>"><?=$value['channelID'];?> == (<?=$value['tablename'];?>)</option>
+            <option value="<?php echo $value['channelID'];?>"><?php echo $value['channelID'];?> == (<?php echo $value['tablename'];?>)</option>
             <?php }?>
         </select>
         <input type="submit" value="search" id="search" name="submit">
@@ -330,14 +330,14 @@ body.loading .modal {
 
         <div class="tab-content">
             <div id="home" class="tab-pane fade in active">
-                <h4>Revenue of the month <?=date('F', mktime(0, 0, 0, $month, 10)) . '-' . $year?></h4>
+                <h4>Revenue of the month <?php echo date('F', mktime(0, 0, 0, $month, 10)) . '-' . $year?></h4>
                 <p>
 
                 <div id="revenue_chart_div"></div>
                 </p>
             </div>
             <div id="menu1" class="tab-pane fade">
-                <h4>Views of the month <?=date('F', mktime(0, 0, 0, $month, 10)) . '-' . $year?></h4>
+                <h4>Views of the month <?php echo date('F', mktime(0, 0, 0, $month, 10)) . '-' . $year?></h4>
                 <p>
 
                 <div id="views_chart_div"></div>
@@ -459,57 +459,7 @@ if($type_table!="redmusic"){
 
     </table>
  
-    
-    <div class="col-md-12">
-            <div class="alert alert-default">
-                <?php
-       
-       $final_payable_with_gst =    (isset($activationdata['final_payable_with_gst'])) ? $activationdata['final_payable_with_gst'] : 0   ;
-       // $final_payable_us = (isset($activationdata_us_report['final_payable'])) ? $activationdata_us_report['final_payable'] : 0   ;
-        $final_payable_us_with_gst = (isset($activationdata_us_report['final_payable_with_gst'])) ? $activationdata_us_report['final_payable_with_gst'] : 0   ;
-                ?>
-                <h5>Total Youtube Received : <?php echo $activationdata['total_amt_recd']?> USD </h5>
-
-                <h5>Total Youtube US payout : <?php echo $activationdata['us_payout']?> USD </h5>
-                <h5>US payout Witholding amount : <!-- <?php echo $activationdata['us_payout']?> x <?php echo $activationdata['holding_percentage']?>% = -->
-                    <?php echo $activationdata['witholding']?> </h5>
-                <h5>Final Payable : (<?php echo $activationdata['total_amt_recd'].'-'.$activationdata['witholding']?>) x
-                    <?php echo $activationdata['shares']?> % = <?php echo $activationdata['final_payable']?></h5>
-                   <!--  <h5>Final Payable-with-GST (<?php echo $activationdata['gst_percentage']?> % ) : 
-                     = <strong><?php echo $final_payable_with_gst?></strong></h5> -->
-                <?php
-                    if(isset($activationdata_us_report['final_payable'])){
-                  ?>
-                <h5>US Report Received :
-                    <?php echo number_format($activationdata_us_report['total_amt_recd'],2,'.','')?> USD </h5>
-                <h5>US Report Payable : <?php echo number_format($activationdata_us_report['total_amt_recd'],2,'.','')?>
-                    x
-                    <?php echo number_format($activationdata_us_report['shares'],2,'.','')?> % =
-                    <?php echo number_format($activationdata_us_report['final_payable'],2,'.','')?> USD </h5>
-                    <!-- <h5>US Report Payable-with-GST : 
-                     = <strong><?php echo $final_payable_us_with_gst?> USD</strong></h5> -->
-                 
-                <?php      
-                    }
-                    ?>
-                <?php
-                     $gst_per = $activationdata['gst_percentage'];
-                    ?>
-                   <!--  <h5 class="text-success">Grand Final Payable with GST (<?php echo $gst_per?>%):
-                    <strong><?php
-                   
-                  
-                    $grand_final_payable_with_gst = $final_payable_with_gst + $final_payable_us_with_gst;
-                  
-                    echo number_format($grand_final_payable_with_gst,8,'.','')." USD";
-                    
-                    ?></strong>
-
-
-                    </h5>  -->
-
-            </div>
-        </div>
+     
 
 
 

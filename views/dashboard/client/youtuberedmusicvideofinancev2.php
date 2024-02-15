@@ -135,20 +135,20 @@ $status_flag_withholding = 0;
 $selected_date = $year . '-' . $month;
 $type_cate = "youtube_red_music_video_finance";
 $type_table = $type_table;
-   $sql = "select * from activity_downlaod_report where  type_table='{$type_table}' and content_owner = '{$_SESSION['client']}' and selected_date like '{$selected_date}%' and type_cate='{$type_cate}'  and (downlaodType='normal' or downlaodType IS NULL ) order by id desc   limit 0,1 ";
+  $sql = "select * from activity_downlaod_report where  type_table='{$type_table}' and content_owner = '{$_SESSION['client']}' and selected_date like '{$selected_date}%' and type_cate='{$type_cate}'  and (downlaodType='normal' or downlaodType IS NULL )    limit 0,1 ";
 $resultQyery = runQuery($sql, $conn);
 $resultQyeryscheck = mysqli_num_rows($resultQyery["dbResource"]);
 
 if ($resultQyeryscheck > 0) {
     $resultQyerydata = mysqli_fetch_assoc($resultQyery["dbResource"]);
 
-    if($resultQyerydata['downlaodType']!='withholding'){
+    if($resultQyerydata['status_flag']!='withholding'){
         $status_flag = $resultQyerydata['status_flag'];
       }
 }
 
 
-$sql = "select * from activity_downlaod_report where  type_table='{$type_table}' and content_owner = '{$_SESSION['client']}' and  selected_date like '{$selected_date}%' and type_cate='{$type_cate}' and downlaodType='withholding' order by id desc limit 0,1 ";
+$sql = "select * from activity_downlaod_report where  type_table='{$type_table}' and content_owner = '{$_SESSION['client']}' and  selected_date like '{$selected_date}%' and type_cate='{$type_cate}' and downlaodType='withholding' limit 0,1 ";
 $resultQyery = runQuery($sql, $conn);
 $resultQyeryscheck = mysqli_num_rows($resultQyery["dbResource"]);
 
@@ -330,16 +330,14 @@ $alertMsg = $returnArr["errMsg"];
 
 
         <?php
-           // echo $status_flag;
-          //  echo   $fileis = $_SESSION['client'] . '_youtube_red_music_video_finance_report_'.$type_table.'_' . $year . '_' . $month . '.zip';
+       //     echo $status_flag;
         if($status_flag==0 || $status_flag==3 ){
             ?>
         <button type="submit" name="export" id="export" class="btn btn-warning fa fa-download" style="font-size:20px;">
         </button>
         <?php }  else {
 //pramodgorai_youtube_red_music_video_finance_report_nd_2022_05.zip
-
-         $fileis = $_SESSION['client'] . '_youtube_red_music_video_finance_report_'.$type_table.'_' . $year . '_' . $month . '.zip';
+        $fileis = $_SESSION['client'] . '_youtube_red_music_video_finance_report_'.$type_table.'_' . $year . '_' . $month . '.zip';
         if (file_exists('../../../excelreports/' . $fileis)) {
             ?>
         <a href='../../../excelreports/<?=$fileis?>'><button type="button" name="btnDownload" id="btnDownload"

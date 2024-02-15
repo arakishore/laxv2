@@ -335,8 +335,12 @@
         type="text/javascript"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css"
         rel="stylesheet" />
+
 </head>
 <style>
+    .text-mutes-sm{
+        color: #6ebae5;
+    }
 </style>
 
 <body>
@@ -458,10 +462,15 @@
             if(file_exists('../../excelreports/'.$fileis)){?>
         <a href='../../excelreports/<?=$fileis?>'>Download zip</a>
         <?php }
-        ?>
+        ?><span class="text-mutes-sm">Please Export again for latest file</span> 
             </div>
             <div class="card-content">
-
+                <?php
+                 $datePrev = new DateTime("$year-$month-01");
+                $prevdate =  $datePrev->modify('-1 month')->format('Y-m-d');
+                 $prevdate_exp = explode("-",$prevdate);
+                 $whptableName_prev = 'youtube_whp_report_'.$nd.'_'.$prevdate_exp[0].'_'.$prevdate_exp[1];
+                ?>
                 <table class="table table-bordered table-condensed">
                     <thead>
                         <tr>
@@ -476,6 +485,9 @@
                             <th>Witholding</th>
                             <th>Witholding(YouTube)</th>
                             <th>Difference</th>
+                            <th>Prev-Adjust</br><?php
+                            echo $prevdate_exp[0].'-'.$prevdate_exp[1];
+                            ?></th>
                             <th>Final Payable</th>
                             <th>GST Perc</th>
                             <th>Final Payable With GST</th>
@@ -488,6 +500,9 @@
                            $haveawhpreport = false;
                            $whptableName = 'youtube_whp_report_'.$nd.'_'.$year.'_'.$month;
                            
+                           // Create a DateTime object for the given year and month
+                          
+                           
                            $tableArr = checkTableExist($whptableName, $conn); 
                            if ($tableArr['errMsg'] == '1') {
                             $haveawhpreport = true;
@@ -495,12 +510,21 @@
                            }else{
                             $haveawhpreport = false;
                            }
+                          
+                           $tableArr_prev = checkTableExist($whptableName_prev, $conn); 
+                           if ($tableArr_prev['errMsg'] == '1') {
+                            $haveawhpreport_prev = true;
+                                 
+                           }else{
+                            $haveawhpreport_prev = false;
+                           }
+
                         foreach($allClientsInfo as $clientEmail=>$clientDetails){ 
                             $US_Sourced_Revenue = 0;
                             $Tax_Withholding_Rate = 0;
                             $Tax_Withheld_Amount = 0;
                             $difference = 0;
-                           
+                            $prevadjust = 0;
 
                            if($haveawhpreport){
                             $table_type_name = 'youtube_whp_report_'.$nd.'_'.$year.'_'.$month;
@@ -515,15 +539,47 @@
                                    $US_Sourced_Revenue = $allClientsInfo_whm_report_data['US_Sourced_Revenue'];
                                    $Tax_Withholding_Rate = $allClientsInfo_whm_report_data['Tax_Withholding_Rate'];
                                    $Tax_Withheld_Amount = $allClientsInfo_whm_report_data['Tax_Withheld_Amount'];
-                                  $difference = $clientDetails["witholding"] - $Tax_Withheld_Amount;
+                                   if($Tax_Withheld_Amount != 0 ){
+                                    $difference = $clientDetails["witholding"] - $Tax_Withheld_Amount;
+                                   }
+                                  
                                 }   
                            }
                          }
+
+                         // haveawhpreport_prev
+                         if($haveawhpreport_prev){
+                            $table_type_name_prev = 'youtube_whp_report_'.$nd.'_'.$prevdate_exp[0].'_'.$prevdate_exp[1];
+                            $activatetableName_prev = 'youtube_video_claim_activation_report_'.$nd.'_'.$prevdate_exp[0].'_'.$prevdate_exp[1];  
+                            $allClientsInfo_whm_report_prev = getWhpReportPrev_v10($conn,$activatetableName_prev,$table_type_name_prev, $clientDetails["content_owner"],0,0);
+                            if (!noError($allClientsInfo_whm_report_prev)) {
+
+                
+                            }else{
+                                if(!empty($allClientsInfo_whm_report_prev)){
+                                   $allClientsInfo_whm_report_prev_data = $allClientsInfo_whm_report_prev['errMsg'];
+                                  // print_r($allClientsInfo_whm_report_prev_data);
+                                   $US_Sourced_Revenue_prev = $allClientsInfo_whm_report_prev_data['US_Sourced_Revenue'];
+                                   $Tax_Withholding_Rate_prev = $allClientsInfo_whm_report_prev_data['Tax_Withholding_Rate'];
+                                   if($allClientsInfo_whm_report_prev_data['prev_month_adjust'] != 0 ){
+                                   $prev_month_adjust = $allClientsInfo_whm_report_prev_data['prev_month_adjust'];
+                                     $prevadjust =   $prev_month_adjust;
+                                   }
+                                }   
+                           }
+                         }
+
+ 
+                    $date = new DateTime("$year-$month-01");
+
+                    // Modify the date to go back one month
+                   
+
                         ?>
                         <tr>
                             <td><input type="checkbox" name="act_id[]" class="delete_act"
                                     value="<?php echo $clientDetails["id"]; ?>" /></td>
-                            <td><a href="<?php echo $rootUrl; ?>controller/activate/export/downlaod_whp.php?table=<?php echo $whptableName?>&client=<?php echo $clientDetails["content_owner"]; ?>" target="_blank"><?php echo $clientDetails["content_owner"]; ?></a></td>
+                            <td><a href="<?php echo $rootUrl; ?>controller/activate/export/downlaod_whp.php?table=<?php echo $whptableName?>&client=<?php echo $clientDetails["content_owner"]; ?>" style="text-decoration:underline;" target="_blank"><?php echo $clientDetails["content_owner"]; ?></a></td>
                             <td><?php echo $clientDetails["total_amt_recd"]; ?></td>
                             <td><?php echo $clientDetails["shares"]; ?></td>
                             <td><?php echo $clientDetails["amt_payable"]; ?></td>
@@ -534,6 +590,8 @@
                             <td><?php echo $clientDetails["witholding"]; ?></td>
                             <td><?php echo $Tax_Withheld_Amount; ?></td>
                             <td class="<?php echo ($difference < 0) ? 'bg-danger':'bg-info';?>"><?php echo $difference; ?></td>
+                            <td class="<?php echo ($prevadjust < 0) ? 'bg-danger':'bg-info';?>"><?php echo $prevadjust; ?></td>
+                            
                             <td><?php echo $clientDetails["final_payable"]; ?></td>
                             <td><?php echo $clientDetails["gst_percentage"]; ?>%</td>
                             <td><?php echo $clientDetails["final_payable_with_gst"]; ?></td>

@@ -2862,7 +2862,8 @@ function ExportActivateCommonReportv10(
         $youtubereport .= ' and video_title like "' . $search . '%"  ';
     }
    
-    // echo "<br>sql :::::  ". $youtubereport;
+   
+
     $youtubereportresult = runQuery($youtubereport, $conn);
     $cdata = [];
     while ($row2 = mysqli_fetch_assoc($youtubereportresult["dbResource"])) {
@@ -2883,6 +2884,8 @@ function ExportActivateCommonReportv10(
             'holding_percentage' => isset($row2['holding_percentage']) ? $row2['holding_percentage'] : '0',
             'witholding' => isset($row2['witholding']) ? $row2['witholding'] : 'N/A',
             'witholding_youtube' => '',
+            'Difference' => '',
+            'Prev_Adjust' => '',
             'final_payable' => isset($row2['final_payable']) ? $row2['final_payable'] : 'N/A',
             'gst_percentage' => isset($row2['gst_percentage']) ? $row2['gst_percentage'] : '0',
             'final_payable_with_gst' => isset($row2['final_payable_with_gst']) ? $row2['final_payable_with_gst'] : '0',
@@ -3980,20 +3983,20 @@ function ExportClientsYoutuberedMusicre_finance_reportv3(
                 $res['data'][] = [
                     'country' => isset($row2['country']) ? $row2['country'] : 'N/A',
                     'contentType' => isset($row2['contentType']) ? $row2['contentType'] : 'N/A',
-                     'channelID' => isset($row2['channelID']) ? $row2['channelID'] : 'N/A',
-                     'videoID' => isset($row2['videoID']) ? $row2['videoID'] : 'N/A',
-                     'assetID' => isset($row2['assetID']) ? $row2['assetID'] : 'N/A',
-                    //  'asset_title' => isset($row2['asset_title']) ? substr(trim($row2['asset_title']),0,1) : 'N/A',
-                      'asset_labels' => isset($row2['asset_labels']) ? $row2['asset_labels'] : 'N/A',
-                     'youtube_payout' => $row2['partnerRevenue'] + 0,
-                     'rev_share' => $rev_share + 0,
-                    'USPAYOUT' => $row2['USPAYOUT'] + 0,
-                     // 'holding_percentage' => $row2['holding_percentage'] + 0,
-                     'WITHHOLDING' => $row2['WITHHOLDING'] + 0,
-                     'finalpayable' => ((($row2['partnerRevenue'] - $row2['WITHHOLDING']) * $rev_share) / 100) + 0,
-                     'gst_per' => $gst_per,
-                     'finalpayable_gst' => $final_payable_wth_gst,
-                     'table_name' => isset($row2['table_name']) ? $row2['table_name'] : 'N/A',
+                    'channelID' => isset($row2['channelID']) ? $row2['channelID'] : 'N/A',
+                    'videoID' => isset($row2['videoID']) ? $row2['videoID'] : 'N/A',
+                    'assetID' => isset($row2['assetID']) ? $row2['assetID'] : 'N/A',
+                    'asset_title' => isset($row2['asset_title']) ? $row2['asset_title'] : 'N/A',
+                    'asset_labels' => isset($row2['asset_labels']) ? $row2['asset_labels'] : 'N/A',
+                    'youtube_payout' => $row2['partnerRevenue'] + 0,
+                    'rev_share' => $rev_share + 0,
+                   'USPAYOUT' => $row2['USPAYOUT'] + 0,
+                    // 'holding_percentage' => $row2['holding_percentage'] + 0,
+                    'WITHHOLDING' => $row2['WITHHOLDING'] + 0,
+                    'finalpayable' => ((($row2['partnerRevenue'] - $row2['WITHHOLDING']) * $rev_share) / 100) + 0,
+                    'gst_per' => $gst_per,
+                    'finalpayable_gst' => $final_payable_wth_gst,
+                    'table_name' => isset($row2['table_name']) ? $row2['table_name'] : 'N/A',
                     
                 ];
 
@@ -8035,6 +8038,7 @@ function getRevenueStatsreport($data=array()){
     $res_final['gst_percentage'] = 0;
     $res_final['holding_percentage'] = 0;
     $res_final['final_payable_with_gst'] = 0;
+    $res_final['witholding_tablename'] = array();
    $counter=0;
     foreach($data as $k=>$value){
         $counter = $counter+1;
@@ -8048,6 +8052,8 @@ function getRevenueStatsreport($data=array()){
         $res_final['holding_percentage'] =  $res_final['holding_percentage'] + $value['holding_percentage'];
         $res_final['gst_percentage'] =  $res_final['gst_percentage'] + $value['gst_per'];
         $res_final['shares'] =  $res_final['shares'] + $value['rev_share'];
+        $res_final['witholding_tablename'][$value['witholding_tablename']] = $value['witholding_tablename'];
+
         
     }
      

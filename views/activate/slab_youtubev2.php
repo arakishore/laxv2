@@ -24,7 +24,7 @@
    require_once(__ROOT__.'/model/distributor/distributorModel.php');
    require_once(__ROOT__.'/model/validate/validateModel.php');
    require_once(__ROOT__.'/model/activate/activateModel.php'); 
-   require_once(__ROOT__.'/model/reports/appleModel.php');
+   require_once(__ROOT__.'/model/reports/youtubeClaimReportsModel.php');
 
 
    $currenturl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
@@ -38,19 +38,20 @@
    } else {
        $conn = $conn["errMsg"];
        $returnArr = array();
-        
 
        //check weather table exist or not
-       $nd = $_GET["nd"];
+       $nd = isset($_GET["nd"]) ? $_GET["nd"] : '';
 
        $selectedDate = $_GET["reportMonthYear"];
        $year     = date("Y", strtotime($selectedDate));
        $month    = date("m", strtotime($selectedDate));
   
+       // $table_type_name = 'youtube_video_claim_activation_report_%';
+       $table_type_name = 'youtube_video_claim_activation_report_%'.'_'.$year.'_'.$month;
        $haveactivationreport = false;
-       $activatetableName = 'report_audio_activation_'.$nd.'_'.$year.'_'.$month; ;
+      // $activatetableName = 'youtube_video_claim_activation_report_'.$nd.'_'.$year.'_'.$month; 
        
-       $tableArr = checkTableExist($activatetableName, $conn); 
+       $tableArr = checkTableExist($table_type_name, $conn); 
        if ($tableArr['errMsg'] == '1') {
         $haveactivationreport = true;
              
@@ -134,23 +135,15 @@
                    //set the search array based on get parameters
                    $clientSearchArr = array("1"=>1);
                
-                    if (isset($_GET["userName"]) && !empty($_GET["userName"])) {
-                        $clientSearchArr["client_username"] = cleanQueryParameter($conn, cleanXSS($_GET["userName"]));
-                    }
-                   if (isset($_GET["source"]) && !empty($_GET["source"])) {
-                       $clientSearchArr["source"] = cleanQueryParameter($conn, cleanXSS($_GET["source"]));
-                   }
-                   
-                   if (isset($_GET["status"]) && is_numeric($_GET["status"])) {
-                       $clientSearchArr["status"] = cleanQueryParameter($conn, cleanXSS($_GET["status"]));
-                   }
+                  $clientSearchArr["content_owner"] =NULL;
+                 
                    if (isset($_GET["contentowner"]) && !empty($_GET["contentowner"])) {
                     $clientSearchArr["content_owner"] = cleanQueryParameter($conn, cleanXSS($_GET["contentowner"]));
                    }
                   
                     
-                   $fieldsStr = "COUNT(*) as noOfClients";
-                   $allClientsCount = getActivationReport($activatetableName,$clientSearchArr, $fieldsStr, null, $conn);
+                  
+                   $allClientsCount = getActivationCountContentOwner($table_type_name, $conn,$clientSearchArr["content_owner"]);
                
                    if (!noError($allClientsCount)) {
                        //error fetching all clients Count
@@ -163,7 +156,7 @@
                        $returnArr["errMsg"] = getErrMsg(5)." Error fetching client details.";
                    } else {
                        $allClientsCount = $allClientsCount["errMsg"][0]["noOfClients"]; //why anonymous? see function definition
-                  
+                     //print_r($allClientsCount);
                        //set the last page num
                        $lastPage = ceil($allClientsCount / $resultsPerPage);
                        // printArr($lastPage);
@@ -177,127 +170,25 @@
                        $logMsg = "Got all clients count for page: {$page}. Now getting all clients info";
                        $logData["step5"]["data"] = "5. {$logMsg}";
                        
-                       $fieldsStr = "*";
-                       //set different getter arguments if it is in export mode
+                      
                        $export = false;
-                       if (isset($_GET["export"])) {
-                           $export = true;
-                           $offset = 0;
-                           $resultsPerPage = 9999;
-                           $fieldsStr = "*";
-                       }
+                        
                 
-                       $allClientsInfo = getActivationReportv2(
-                          $activatetableName,
-                           $clientSearchArr,
-                           $fieldsStr,
-                           null,
-                           $conn,
-                           $offset,
-                           $resultsPerPage
+                       $allClientsInfo = getActivationContentOwnerecords(
+                          $table_type_name,
+                          $conn,
+                          $clientSearchArr["content_owner"],
+                          $offset,
+                          $resultsPerPage
                        );
                    
-                         if (!noError($allClientsInfo)) {
-     
-                           //error fetching all clients info
-                           $logMsg = "Couldn't fetch all clients info: {$allClientsInfo["errMsg"]}";
-                           $logData["step5.1"]["data"] = "5.1. {$logMsg}";
-                           $logsProcessor->writeJSON($logFileName, $logFilePath, $logData, $initLogs["activity"]);
-                           
-                           $returnArr["errCode"] = 5;
-                           $returnArr["errMsg"] = getErrMsg(5)." Error fetching clients details.";
-                       } else {
+                         if (!noError($allClientsInfo)) { } else {
                            $logMsg = "Got all clients data for page: {$page}";
                            $logData["step6"]["data"] = "6. {$logMsg}";
                            $logsProcessor->writeJSON($logFileName, $logFilePath, $logData, $initLogs["activity"]);
                            $allClientsInfo = $allClientsInfo["errMsg"];
                        
-                           if ($export) {
-   
-                               $logMsg = "Request is to export all clients data to excel.";
-                               $logData["step7"]["data"] = "7. {$logMsg}";
-                               
-                               $spreadsheet = new Spreadsheet();
-                               $spreadsheet->setActiveSheetIndex(0);
-                               $activeSheet = $spreadsheet->getActiveSheet();
-                               
-                               //add header to spreadsheet
-                               $header = array_keys($allClientsInfo);
-                               
-                               $header = $header[0];
-                               $header = array_keys($allClientsInfo[$header]);
-                               $header = array_values($header);
-                               $activeSheet->fromArray([$header], NULL, 'A1');
-    
-                               //add each client to the spreadsheet
-                               $clients = array();
-                               $startCell = 2; //starting from A2
-                               foreach($allClientsInfo as $clientEmail=>$clientDetails) {
-                                   $client = array_values($clientDetails);
-   
-                                   //replace status code with name
-                                   $client[14] = $clientStatusMap[$client[14]];
-                                   //replace client type details json with string
-                                   $client[15] = json_decode($client[15], true);
-                                   $clientTypeDetails = "";
-                                   if(is_array($client[15])) {
-                                       foreach ($client[15] as $detailName=>$detailValue) {
-                                           $clientTypeDetails .= "{$detailName}={$detailValue}, ";
-                                       }
-                                   }
-                                   $client[15] = $clientTypeDetails;
-   
-                                   $client[16] = json_decode($client[16], true);
-                                   $companyTypeDetails = "";
-                                   if(is_array($client[16])) {
-                                       foreach ($client[16] as $detailName=>$detailValue) {
-                                           $companyTypeDetails .= "{$detailName}={$detailValue}, ";
-                                       }
-                                   }
-                                   $client[16] = $companyTypeDetails;
-                                   $activeSheet->fromArray([$client], NULL, 'A'.$startCell);
-                                   $startCell++;
-                               }
-   
-                               //auto width on each column
-                               $highestColumn = $spreadsheet->getActiveSheet()->getHighestDataColumn();
-   
-                               foreach (range('A', $highestColumn) as $col) {
-                                   $spreadsheet->getActiveSheet()
-                                           ->getColumnDimension($col)
-                                           ->setAutoSize(true);
-                               }
-   
-                               //style the header and totals rows
-                               $styleArray = [
-                                   'font' => [
-                                       'bold' => true,
-                                       'color'=>array('argb' => 'FFC5392A'),
-                                   ],
-                                   'alignment' => [
-                                       'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER
-                                   ],
-                                   'borders' => [
-                                       'top' => [
-                                           'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN
-                                       ]
-                                   ]
-                               ];
-                               $spreadsheet->getActiveSheet()->getStyle('A1:'.$highestColumn.'1')->applyFromArray($styleArray);
-                               
-                               // //download the file
-                               $filename = "clientsMaster";
-                               header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-                               header('Content-Disposition: attachment;filename="'.$filename.'.xlsx"');
-                               header('Cache-Control: max-age=0');
-   
-                               $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
-                               ob_clean();
-                               $writer->save('php://output');
-   
-                               $logsProcessor->writeJSON($logFileName, $logFilePath, $logData, $initLogs["activity"]);
-                               exit;
-                           }
+                          
                        
                            $returnArr["errCode"] = -1;
                        } //close getting all clients info
@@ -367,31 +258,18 @@
                         </a></button>
                 </div>
             </div>
-            <div class="col-lg-5">
-                <h4 class="modal2-title">Activate Report Saavan Music <?php echo $nd?> -  <?php echo $_GET["reportMonthYear"];?> </h4>
+            <div class="col-lg-6">
+                <h4 class="modal2-title">Activate Report Youtube Claim  - <?php echo $nd?> -  <?php echo $_GET["reportMonthYear"];?></h4> 
             </div>
         </div>
     </div>
     <!-- choose field drowpdoun-->
-    <div class="col-md-12">
-        <!-- <div class="col-md-2" style="margin-left:1vw; ">
-            <div class="head2" style="margin-left:1vw; margin-top:4vh;">
-                <select name="userName" id="searchby" class="form-control">
-                    <option value="">Choose a field</option>
-                    <option value="Video_id">Video ID</option>
-                    <option value="video_title">Video Title</option>
-                    <option value="asset_channel">Channel</option>
-                    <option value="uploader2">Uploader</option>
-                    <option value="uploader">Content Owner</option>
-                    <option value="content_type">Content Type</option>
-                    <option value="asset_id">Asset ID</option>
-                </select>
-            </div>
-            </div> -->
+    <div class="row" style="margin:10px; ">
+    <div class="col-md-6">
+        
         <!-- search button -->
-        <div class="" style="margin-left:1vw;">
-            <!-- <button type="submit" id="search" class="btn btn-success fa fa-search">
-                    </button> -->
+        
+           
             <form enctype="multipart/form-data" class="form-inline searchForm"
                 action="<?=$currenturl?>" method="GET">
                 <input type="hidden" name="reportMonthYear" value="<?=$_GET['reportMonthYear']?>" />
@@ -410,30 +288,25 @@
                             }
                       ?>
                 </select>
-
-                <button type="submit" class="btn btn-success fa fa-search">
+                            <div class="btn-group bootstrap-select form-control1"><button type="submit" class="btn-group  btn btn-success fa fa-search">
                     <div class="ripple-container"></div>
-                </button>
+                </button></div>
+                
             </form>
-        </div>
+         
         <!-- end Status -->
         <!-- search button -->
-        <div class="" style="margin-left:1vw;">
-            <!-- <button type="submit" id="search" class="btn btn-success fa fa-search">
-               </button> -->
-            <td colspan="7" align="center" style="padding-top:3px; ">
-
-                <a class="btn btn-success" id="savebulk" data-toggle="collapse" href="#collapseExample5" role="button"
-                    aria-expanded="false" aria-controls="collapseExample" style="margin-left:0.5vw;">Bulk Change
-                    status</a>
-
-
-                <button class="btn btn-success" id="genrateReport">Genrate Report</button>
-            </td>
-        </div>
+       
         <!-- end search button -->
         <!-- Table Header + Save Button -->
     </div>
+    <div class="col">
+        <button class="btn btn-success" id="UpdatePercentage">Update Percentage</button>
+            
+        </div>
+    </div>
+
+   
     </div>
     <!--main table page-->
         
@@ -453,57 +326,86 @@
             </div>
             <?php }else{  ?>
                 <div class="card-content">
-                <a class="btn btn-success" id="btnExportunAssigned" data-toggle="collapse" href="#"   style="margin-left:0.5vw;">Export</a>   <?php
-         $fileis=  'report_audio_activation_'.$nd.'_'.$year.'_'.$month.'.zip';
-        
-            if(file_exists('../../excelreports/'.$fileis)){?>
-        <a href='../../excelreports/<?=$fileis?>'>Download zip</a>
-        <?php }
-        ?><span class="text-mutes-sm">Please Export again for latest file</span> 
+                 
             </div>
             <div class="card-content">
 
                 <table class="table table-bordered table-condensed">
-                <thead>
+                    <thead>
                         <tr>
-                            <th><input type="checkbox" value="0" id="selectAll" /></th>
+                            <!-- <th><input type="checkbox" value="0" id="selectAll" /></th> -->
                             <th>Content Owner</th>
                             <th>Total Amount Recvd</th>
-                            <th>Shares (%)</th>
-                            <th>Amt Payable</th>
-                            <th>US Payout</th>
-                            <th>Holding Perc</th>
-                            <th>Witholding</th>
-                            <th>Final Payable</th>
-                            <th>GST Perc</th>
-                            <th>Final Payable With GST</th>
-                            <th>Status</th>
-                             
+                            <th>Amount (Breakup)</th>
+                            <th>Expected Shares (%)</th>
+                            <th>Applied Shares (%)</th>
+                            
+                           
                         </tr>
                     </thead>
                     <tbody>
                         <?php
-                      
+                           $haveawhpreport = false;
+                           $whptableName = 'youtube_whp_report_'.$nd.'_'.$year.'_'.$month;
+                           
+                        //    $tableArr = checkTableExist($whptableName, $conn); 
+                        //    if ($tableArr['errMsg'] == '1') {
+                        //     $haveawhpreport = true;
+                                 
+                        //    }else{
+                        //     $haveawhpreport = false;
+                        //    }
+
+                         
                         foreach($allClientsInfo as $clientEmail=>$clientDetails){ 
-                          //  $holding_percentage = $clientDetails["holding_percentage"];
-                           // $final_payable = $clientDetails["final_payable"];
-                           // $gst_percentage = $clientDetails["gst_percentage"];
-                           // $final_payable_with_gst = number_format($final_payable + ($final_payable * $gst_percentage /100),2,'.','');
+                           
+                            $US_Sourced_Revenue = 0;
+                            $Tax_Withholding_Rate = 0;
+                            $Tax_Withheld_Amount = 0;
+                            $difference = 0;
+                            $differencep = 0;
+                            $total_amt_recd = $clientDetails["total_amt_recd"];
+                            $shares = $clientDetails["shares"];
+                            $amt_payable =  $total_amt_recd  ;
+                            $us_payout = $clientDetails["us_payout"];
+                            $witholding = $clientDetails["witholding"];
+                            $final_payable = $clientDetails["final_payable"];
+                            $gst_percentage = $clientDetails["gst_percentage"];
+                            $holding_percentage  = $clientDetails["holding_percentage"];
+                            $final_payable_with_gst = $clientDetails["final_payable_with_gst"];
+                          //  $amount_cmsType = getAmountRecived($conn,$table_type_name,$clientDetails["content_owner"]);
+                            
+                            $slab_percentage = get_sharespercentage($conn,$total_amt_recd,$witholding,$clientDetails["content_owner"],$shares);
+                           if($haveawhpreport){
+                        //     $table_type_name = 'youtube_whp_report_'.$nd.'_'.$year.'_'.$month;
+                        //     $allClientsInfo_whm_report = getWhpReport_v10($conn,$table_type_name, $clientDetails["content_owner"],0,0);
+                        //     if (!noError($allClientsInfo_whm_report)) {
+
+                
+                        //     }else{
+                        //         if(!empty($allClientsInfo_whm_report)){
+                        //            $allClientsInfo_whm_report_data = $allClientsInfo_whm_report['errMsg'];
+                        //           // print_r($allClientsInfo_whm_report_data);
+                        //            $US_Sourced_Revenue = $allClientsInfo_whm_report_data['US_Sourced_Revenue'];
+                        //            $Tax_Withholding_Rate = $allClientsInfo_whm_report_data['Tax_Withholding_Rate'];
+                        //            $Tax_Withheld_Amount = $allClientsInfo_whm_report_data['Tax_Withheld_Amount'];
+                        //           $difference = $clientDetails["witholding"] - $Tax_Withheld_Amount;
+                        //         }   
+                        //    }
+                         }
+
+                         $differencep = $slab_percentage - $shares;
                         ?>
                         <tr>
-                            <td><input type="checkbox" name="act_id[]" class="delete_act"
-                                    value="<?php echo $clientDetails["id"]; ?>" /></td>
+                            <!-- <td><input type="checkbox" name="act_id[]" class="delete_act"
+                                    value="<?php echo $clientDetails["id"]; ?>" /></td> -->
                             <td><?php echo $clientDetails["content_owner"]; ?></td>
                             <td><?php echo $clientDetails["total_amt_recd"]; ?></td>
-                            <td><?php echo $clientDetails["shares"]; ?></td>
-                            <td><?php echo $clientDetails["amt_payable"]; ?></td>
-                            <td><?php echo $clientDetails["us_payout"]; ?></td>
-                            <td><?php echo $clientDetails["holding_percentage"]; ?>%</td>
-                            <td><?php echo $clientDetails["witholding"]; ?></td>
-                            <td><?php echo $clientDetails["final_payable"]; ?></td>
-                            <td><?php echo $clientDetails["gst_percentage"]; ?>%</td>
-                            <td><?php echo $clientDetails["final_payable_with_gst"]; ?></td>
-                            <td><?php echo $clientDetails["status"]; ?></td>
+                            <td><?php echo $clientDetails["total_amt_recd_grp"]; ?></td>
+                            <td><?php echo $slab_percentage; ?></td>
+                            <td  class="<?php echo ($differencep != 0) ? 'bg-danger':'bg-info1';?>" ><?php echo $shares; ?></td>
+                           
+                           
                             
                         </tr>
                         <?php
@@ -567,14 +469,14 @@
         <!-- Modal content-->
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">Change status</h4>
+                <h4 class="modal-title">Change Percentage</h4>
             </div>
             <div class="modal-body">
-                <p id="alertmsg">Please select action to changes status of selected records</p>
+                <p id="alertmsg">Please select action to changes Percentage of  records</p>
                 <div class="modal-footer">
 
-                    <button type="button" class="btn btn-secondary" id="activateRecords">Active</button>
-                    <button type="button" class="btn btn-info" id="inactivateRecords">Inactive</button>
+                    <button type="button" class="btn btn-secondary" id="activateRecords">Update</button>
+                    <button type="button" class="btn btn-info" id="inactivateRecords">Close</button>
                 </div>
             </div>
         </div>
@@ -583,74 +485,74 @@
 <script>
 $(document).ready(function() {
 
-    $('#btnExportunAssigned').on('click', function(e) {
-        $.ajax({
-            type: "POST",
-            dataType: "json",
-            url: "<?php echo $rootUrl; ?>controller/activate/export/",
-            data: {
-                selected_date: '<?php echo $_GET["reportMonthYear"];?>',
-                type: 'report_audio_activation',
-                nd: '<?php echo $nd?>'
-            },
-            success: function(response) {
-                console.log(response);
-                //handle error in response
-                if (response["errCode"]) {
-                    if (response["errCode"] != "-1") {
+    // $('#btnExportunAssigned').on('click', function(e) {
+    //     $.ajax({
+    //         type: "POST",
+    //         dataType: "json",
+    //         url: "<?php echo $rootUrl; ?>controller/activate/export/",
+    //         data: {
+    //             selected_date: '<?php echo $_GET["reportMonthYear"];?>',
+    //             type: 'youtube_video_claim_activation_report',
+    //             nd: '<?php echo $nd?>'
+    //         },
+    //         success: function(response) {
+    //             console.log(response);
+    //             //handle error in response
+    //             if (response["errCode"]) {
+    //                 if (response["errCode"] != "-1") {
 
-                        $("#alert").css("display", "block");
-                        //there was an error, alert the error and hide the form.
-                        $("#alert").
-                        removeClass("alert-success").
-                        addClass("alert-danger").
-                        fadeIn().
-                        html(response["errMsg"]);
-                        // setTimeout(function(){
-                        //     window.location.reload();
-                        // }, 3000);
-                        // $("#uploadMISFilesContainer").hide();
-                    } else {
-                        $("#alert").css("display", "block");
-                        $("#alert").
-                        removeClass("alert-danger").
-                        addClass("alert-success").
-                        fadeIn().
-                        html(response["errMsg"]);
-                        setTimeout(function() {
-                            window.location.reload();
-                        }, 3000);
+    //                     $("#alert").css("display", "block");
+    //                     //there was an error, alert the error and hide the form.
+    //                     $("#alert").
+    //                     removeClass("alert-success").
+    //                     addClass("alert-danger").
+    //                     fadeIn().
+    //                     html(response["errMsg"]);
+    //                     // setTimeout(function(){
+    //                     //     window.location.reload();
+    //                     // }, 3000);
+    //                     // $("#uploadMISFilesContainer").hide();
+    //                 } else {
+    //                     $("#alert").css("display", "block");
+    //                     $("#alert").
+    //                     removeClass("alert-danger").
+    //                     addClass("alert-success").
+    //                     fadeIn().
+    //                     html(response["errMsg"]);
+    //                     setTimeout(function() {
+    //                         window.location.reload();
+    //                     }, 3000);
 
-                    }
-                }
-            },
-            error: function(jqXHR, exception) {
-                var msg = '';
-        if (jqXHR.status === 0) {
-            msg = 'Not connect.\n Verify Network.';
-        } else if (jqXHR.status == 404) {
-            msg = 'Requested page not found. [404]';
-        } else if (jqXHR.status == 500) {
-            msg = 'Internal Server Error [500].';
-        } else if (exception === 'parsererror') {
-            msg = 'Requested JSON parse failed.';
-        } else if (exception === 'timeout') {
-            msg = 'Time out error.';
-        } else if (exception === 'abort') {
-            msg = 'Ajax request aborted.';
-        } else {
-            msg = 'Uncaught Error.\n' + jqXHR.responseText;
-        }
-        console.log("msg",msg);
-                $(".alert").
-                removeClass("alert-success").
-                addClass("alert-danger").
-                fadeIn().
-                find("span").
-                html("500 Internal Server Error");
-            }
-        });
-    });
+    //                 }
+    //             }
+    //         },
+    //         error: function(jqXHR, exception) {
+    //             var msg = '';
+    //     if (jqXHR.status === 0) {
+    //         msg = 'Not connect.\n Verify Network.';
+    //     } else if (jqXHR.status == 404) {
+    //         msg = 'Requested page not found. [404]';
+    //     } else if (jqXHR.status == 500) {
+    //         msg = 'Internal Server Error [500].';
+    //     } else if (exception === 'parsererror') {
+    //         msg = 'Requested JSON parse failed.';
+    //     } else if (exception === 'timeout') {
+    //         msg = 'Time out error.';
+    //     } else if (exception === 'abort') {
+    //         msg = 'Ajax request aborted.';
+    //     } else {
+    //         msg = 'Uncaught Error.\n' + jqXHR.responseText;
+    //     }
+    //     console.log("msg",msg);
+    //             $(".alert").
+    //             removeClass("alert-success").
+    //             addClass("alert-danger").
+    //             fadeIn().
+    //             find("span").
+    //             html("500 Internal Server Error");
+    //         }
+    //     });
+    // });
 
 
     // Handle click on "Select all" control
@@ -668,69 +570,15 @@ $(document).ready(function() {
         }
     });
 
-
-    $('#genrateReport').on('click', function(e) {
-        $.ajax({
-            type: "POST",
-            dataType: "json",
-            url: "<?php echo $rootUrl; ?>controller/activate/generate/",
-            data: {
-                selected_date: '<?php echo $_GET["reportMonthYear"];?>',
-                nd: '<?php echo $_GET["nd"];?>',
-                type: 'report_audio_activation_saavan'
-            },
-            success: function(response) {
-                //alert(response);
-                console.log("response : ",response);
-                //handle error in response
-                if (response["errCode"]) {
-                    if (response["errCode"] != "-1") {
-                        console.log("hiee");
-                        $(".alert").css("display", "block");
-                        //there was an error, alert the error and hide the form.
-                        $(".alert").
-                        removeClass("alert-success").
-                        addClass("alert-danger").
-                        fadeIn().
-                        html(response["errMsg"]);
-                        // $("#uploadMISFilesContainer").hide();
-                    } else {
-                        $(".alert").css("display", "block");
-                        $(".alert").
-                        removeClass("alert-danger").
-                        addClass("alert-success").
-                        fadeIn().
-                        html(response["errMsg"]);
-                        // setTimeout(function(){
-                        //     window.location.reload();
-                        // }, 3000);
-
-                    }
-                }
-            },
-            error: function() {
-                $(".alert").
-                removeClass("alert-success").
-                addClass("alert-danger").
-                fadeIn().
-                find("span").
-                html("500 Internal Server Error");
-            }
-        });
-    });
-    var id = [];
+ 
+   
 
     // Handle form submission event
-    $('#savebulk').on('click', function(e) {id = []
-        $(':checkbox:checked').each(function(i) { console.log(i);
-          //  if (i != 0) {
-                id.push($(this).val());
-           // }
-
-        });
-        if (id.length > 0) {
+    $('#UpdatePercentage').on('click', function(e) {id = []
+        
+        
             confirmbox();
-        }
+        
     });
 
     $('#activateRecords').on('click', function(e) {
@@ -738,14 +586,14 @@ $(document).ready(function() {
         $("#deleteDistributorModal").modal('toggle');
     });
     $('#inactivateRecords').on('click', function(e) {
-        bulkassign('inactive');
+         
         $("#deleteDistributorModal").modal('toggle');
     });
 
 
-    function bulkassign(status) {
+    function bulkassign() {
  
-        saveContentowner(id, status);
+        saveContentowner();
     }
 
     function confirmbox() {
@@ -753,27 +601,21 @@ $(document).ready(function() {
         $("#deleteDistributorModal").modal();
     }
 
-    //   $(document).on('change', '.cselect', function() {
-    //       var id = $(this).data("id");
-    //       saveContentowner(id, this.value);
-    //   });
+   
 
-    function saveContentowner(ids, status) {
-        console.log(ids);
-        if (!ids) {
-            alert('Please select records..');
-            return false;
-        }
+    function saveContentowner() {
+        
+        // if (!ids) {
+        //     alert('Please select records..');
+        //     return false;
+        // }
         $.ajax({
             type: "POST",
             dataType: "json",
-            url: "<?php echo $rootUrl; ?>controller/activate/generate/changeStatus.php",
+            url: "<?php echo $rootUrl; ?>controller/activate/generate/changePercentage.php",
             data: {
-                id: ids.join(','),
-                status: status,
-                nd: '<?php echo $_GET["nd"];?>',
                 reportMonthYear: '<?php echo $_GET["reportMonthYear"]?>',
-                report: 'report_audio_activation'
+                report: 'youtube_video_claim_activation_report'
             },
             success: function(response) {
 

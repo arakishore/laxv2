@@ -39,16 +39,7 @@ $returnArr["errMsg"] = getErrMsg(1).$conn["errMsg"];
 } else {
 $conn = $conn["errMsg"];
 
-/*  echo $sql_co_mapping = "select client_username ,   CASE WHEN JSON_VALID(client_type_details) THEN JSON_UNQUOTE(JSON_EXTRACT(client_type_details, '$.revenueShareYoutubeAudio')) ELSE null END as rev_share  from crep_cms_clients  ";
-
-$channel_co_maping_result = runQuery($sql_co_mapping, $conn);
-
-print_r($channel_co_maping_result);
-
-while ($row3 = mysqli_fetch_assoc($channel_co_maping_result["dbResource"])) {
-     print_r($row3);
-    
-}  */
+ 
 
 $returnArr = array();
 

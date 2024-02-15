@@ -147,21 +147,21 @@ if (!noError($conn)) {
      $selected_date = $year.'-'.$month;
      $type_cate = "youtube_video_claim_report";
      $type_table = $type_table;
-       $sql = "select * from activity_downlaod_report where  type_table='{$type_table}' and content_owner = '{$_SESSION['client']}' and selected_date='{$selected_date}' and type_cate='{$type_cate}' and (downlaodType='normal' or downlaodType IS NULL ) order by id desc  limit 0,1 ";
+       $sql = "select * from activity_downlaod_report where  type_table='{$type_table}' and content_owner = '{$_SESSION['client']}' and selected_date='{$selected_date}' and type_cate='{$type_cate}' and (downlaodType='normal' or downlaodType IS NULL )   limit 0,1 ";
     $resultQyery = runQuery($sql, $conn);
     $resultQyeryscheck = mysqli_num_rows($resultQyery["dbResource"]);
    
     if ($resultQyeryscheck > 0) {
         $resultQyerydata = mysqli_fetch_assoc($resultQyery["dbResource"]);
 
-        if($resultQyerydata['downlaodType']!='withholding'){
+        if($resultQyerydata['status_flag']!='withholding'){
           $status_flag = $resultQyerydata['status_flag'];
         }
         
        
     }
 
-    $sql = "select * from activity_downlaod_report where  type_table='{$type_table}' and content_owner = '{$_SESSION['client']}' and selected_date='{$selected_date}' and type_cate='{$type_cate}' and downlaodType='withholding' order by id desc limit 0,1 ";
+    $sql = "select * from activity_downlaod_report where  type_table='{$type_table}' and content_owner = '{$_SESSION['client']}' and selected_date='{$selected_date}' and type_cate='{$type_cate}' and downlaodType='withholding' limit 0,1 ";
     $resultQyery = runQuery($sql, $conn);
     $resultQyeryscheck = mysqli_num_rows($resultQyery["dbResource"]);
    
@@ -421,9 +421,9 @@ body.loading .modal {
  
     </div>
     <div class="col-md-2">
-        <a href="youtubev2_detailview_v2.php?userName=<?php echo $userName?>&type_table=<?php echo $type_table?>&reportMonthYear=<?php echo $_GET["reportMonthYear"]?>"
+        <!-- <a href="youtubev2_detailview_v2.php?userName=<?php echo $userName?>&type_table=<?php echo $type_table?>&reportMonthYear=<?php echo $_GET["reportMonthYear"]?>"
             target="_blank"><button type="button" name="Detail" id="Detail" class="btn btn-warning">Detail
-                View</button></a>
+                View</button></a> -->
     </div>
 
 
@@ -464,8 +464,8 @@ body.loading .modal {
      }
      
  }
+ $activationdata_main = $activationdata;
  
-
  
 if($type_table!="redmusic"){
     //  $table_type_name = 'youtube_labelengine_activation_report_%_' . $year . '_' . $month;
@@ -513,14 +513,16 @@ if($type_table!="redmusic"){
 
    
    $allClientsInfo0 = ExportClientsYoutubeClaimReportv3($table_type_name, $conn, 0, 90000, '', $_SESSION['client'],$other_tables,'withholding');
-    $allClientsInfo1 = $allClientsInfo0["errMsg"]['data'];
+   $allClientsInfo1 = isset($allClientsInfo0["errMsg"]['data']) ? $allClientsInfo0["errMsg"]['data'] : [];
+
+  // print_r($allClientsInfo1);
     $activationdata2 = getRevenueStatsreport($allClientsInfo1);
    //print_r($activationdata);
     $activationdata2 = $activationdata2['errMsg'];
     if(!empty($activationdata2['total_amt_recd'])){
             $activationdata = $activationdata2;
     }
-
+    
   ?>
         <!-- <table id="example" class="table table-striped table-hover" style="width:100%">
         <thead>
@@ -537,7 +539,38 @@ if($type_table!="redmusic"){
 
 
     </table>-->
+            <?php
+               $difference = 0;
+               $prevadjust = 0;
 
+              
+
+                $datePrev = new DateTime("$year-$month-01");
+                $prevdate =  $datePrev->modify('-1 month')->format('Y-m-d');
+                $prevdate_exp = explode("-",$prevdate);
+                $table_type_name_whm_prev = 'youtube_whp_report_nd%_' . $prevdate_exp[0].'_'.$prevdate_exp[1];
+                $activation_table_type_name_prev = 'youtube_video_claim_activation_report_nd%_' . $prevdate_exp[0] . '_' . $prevdate_exp[1];
+
+                $allClientsInfo_whm_report_prev = getClientWhpReportPrev_v10($conn,$activation_table_type_name_prev,$table_type_name_whm_prev, $_SESSION['client'],0,0);
+               
+                if (!noError($allClientsInfo_whm_report_prev)) {
+    
+    
+                }else{
+                    
+                    if(!empty($allClientsInfo_whm_report_prev)){
+                       $allClientsInfo_whm_report_prev_data = $allClientsInfo_whm_report_prev['errMsg'];
+                       //print_r($allClientsInfo_whm_report_prev_data);
+                      // die();
+                      // $US_Sourced_Revenue_prev = $allClientsInfo_whm_report_prev_data['US_Sourced_Revenue'];
+                      // $Tax_Withholding_Rate_prev = $allClientsInfo_whm_report_prev_data['Tax_Withholding_Rate'];
+                       //$Tax_Withheld_Amount_prev = $allClientsInfo_whm_report_prev_data['Tax_Withheld_Amount'];
+                       $prev_month_adjust = $allClientsInfo_whm_report_prev_data['prev_month_adjust'];
+                        $prevadjust =   $prev_month_adjust;
+                    }   
+               }
+    
+            ?>
        
         <div class="col-md-12">
             <div class="alert alert-default">
@@ -552,10 +585,26 @@ if($type_table!="redmusic"){
                 <h5>Total Youtube US payout : <?php echo $activationdata['us_payout']?> USD </h5>
                 <h5>US payout Witholding amount : <!-- <?php echo $activationdata['us_payout']?> x <?php echo $activationdata['holding_percentage']?>%  = -->
                     <?php echo $activationdata['witholding']?> </h5>
-                <h5>Final Payable : (<?php echo $activationdata['total_amt_recd'].'-'.$activationdata['witholding']?>) x
+                
+                <?php
+                if($prevadjust !=0){
+                    $final_payout_total = $activationdata['final_payable'] + $prevadjust;
+                    $sign =  ($prevadjust<0) ? '-':'+';
+                 ?>
+                 <h5>This Month Final Payable : (<?php echo $activationdata['total_amt_recd'].'-'.$activationdata['witholding']?>) x
                     <?php echo $activationdata['shares']?> % = <?php echo $activationdata['final_payable']?></h5>
-                    <!-- <h5>Final Payable-with-GST (<?php echo $activationdata['gst_percentage']?> % ) : 
-                     = <strong><?php echo $final_payable_with_gst?></strong></h5> -->
+                  <h5 style="color: <?php echo ($prevadjust<0) ? 'red':'green'?>; ">Previous Month Adjustment (<?php echo $prevdate?>) : <?php echo $prevadjust?></h5>
+                  <h5 ><span style="color: #000;font-weight: 900;">Final Payable : <?php echo $activationdata['final_payable']?> <?php echo $sign?> <?php echo abs($prevadjust)?> = <?php echo $final_payout_total?> (Please raise Invoice for this amount)</span></h5>
+                   
+                 <?php   
+                } else {
+                ?>
+                <h5><span style="color: #000;font-weight: 900;">Final Payable : (<?php echo $activationdata['total_amt_recd'].'-'.$activationdata['witholding']?>) x
+                    <?php echo $activationdata['shares']?> % = <?php echo $activationdata['final_payable']?> (Please raise Invoice for this amount)</span></h5>
+                      
+                <?php    
+                }
+                ?>     
                 <?php
                     if(isset($activationdata_us_report['final_payable'])){
                   ?>
@@ -599,7 +648,7 @@ if($type_table!="redmusic"){
                   
                     $new_amt = 0;
                     $old_amt = 0;
-
+                /*
             $allClientsInfo_whm_report = getActivationReportwhm_v10(
                 $conn,
                 $table_type_name,
@@ -629,14 +678,51 @@ if($type_table!="redmusic"){
                 }
                 
             }
+            */
+            //echo $table_type_name_whm;
+            $allClientsInfo_whm_report = getClientWhpReport_v10($conn,$table_type_name_whm, $_SESSION['client'],0,0);
+            if (!noError($allClientsInfo_whm_report)) {
+
+
+            }else{
+                if(!empty($allClientsInfo_whm_report)){
+                    //print_r($activationdata_main);
+                   
+                   $allClientsInfo_whm_report_data = $allClientsInfo_whm_report['errMsg'];
+                  // print_r($allClientsInfo_whm_report_data);
+                   $US_Sourced_Revenue = $allClientsInfo_whm_report_data['US_Sourced_Revenue'];
+                   $Tax_Withholding_Rate = $allClientsInfo_whm_report_data['Tax_Withholding_Rate'];
+                   $Tax_Withheld_Amount = $allClientsInfo_whm_report_data['Tax_Withheld_Amount'];
+                   if($Tax_Withheld_Amount !=0 ){
+                    $difference = $activationdata["witholding"] - $Tax_Withheld_Amount;
+                   }
+                   $total_witholding = 0;
+                   foreach($allClientsInfo_whm_report_data['WHM_TableName_TWA'] as $keyTableName => $valueWhmc){
+                   
+                    $temp_total_witholding=0;
+                    $explode_table = array_map('strrev', explode('_', strrev($keyTableName)));
+                    $cmstype = $explode_table[2];
+                      $temp_activationTable = 'youtube_video_claim_activation_report_'.$cmstype.'_'.$year.'_'.$month;
+                        if(isset($activationdata_main['witholding_tablename'][$temp_activationTable])){
+                            //print_r($valueWhmc);
+                            if($valueWhmc!=0){
+                                $temp_total_witholding = $activationdata_main['witholding_tablename'][$temp_activationTable] - $valueWhmc;
+                            }
+                            
+                        }
+                        $total_witholding = $total_witholding + $temp_total_witholding;
+                   }
+                    
+                }   
+           }
 
            
 
-            
+            if($total_witholding!=0){
             ?>
-            <div class="alert alert-success">
-                <?php echo $message?> 
-                
+            <div class="alert <?php echo ($total_witholding < 0) ? 'alert-warning':'alert-success';?>">
+            <?php echo $total_witholding; ?> Amount will Adjust in Next payment 
+                <?php }?>
         <?php
         //echo $status_flag;
         if($status_flag_withholding_actual==0 || $status_flag_withholding_actual==3 ){
@@ -653,9 +739,7 @@ if($type_table!="redmusic"){
         <?php
         } else {
             ?>
-        <div id="alertaaa" class="text-center alert alert-info">Report generation is in queue, will notify via mail
-
-        </div>
+        <div id="alertaaa" class="text-center alert alert-info">Report generation is in queue, will notify via mail        </div>
         <?php
         }
                 

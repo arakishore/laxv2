@@ -144,19 +144,19 @@ if (!noError($conn)) {
      $selected_date = $year.'-'.$month;
      $type_cate = "youtubeecommercepaidfeaturesv2";
      $type_table = $type_table;
-      $sql = "select * from activity_downlaod_report where  type_table='{$type_table}' and content_owner = '{$_SESSION['client']}' and selected_date='{$selected_date}' and type_cate='{$type_cate}'  and (downlaodType='normal' or downlaodType IS NULL )  order by id desc  limit 0,1 ";
+      $sql = "select * from activity_downlaod_report where  type_table='{$type_table}' and content_owner = '{$_SESSION['client']}' and selected_date='{$selected_date}' and type_cate='{$type_cate}'  and (downlaodType='normal' or downlaodType IS NULL )    limit 0,1 ";
     $resultQyery = runQuery($sql, $conn);
     $resultQyeryscheck = mysqli_num_rows($resultQyery["dbResource"]);
    
     if ($resultQyeryscheck > 0) {
         $resultQyerydata = mysqli_fetch_assoc($resultQyery["dbResource"]);
-        if($resultQyerydata['downlaodType']!='withholding'){
+        if($resultQyerydata['status_flag']!='withholding'){
             $status_flag = $resultQyerydata['status_flag'];
           }
     }
 
 
-    $sql = "select * from activity_downlaod_report where  type_table='{$type_table}' and content_owner = '{$_SESSION['client']}' and selected_date='{$selected_date}' and type_cate='{$type_cate}' and downlaodType='withholding' order by id desc limit 0,1 ";
+    $sql = "select * from activity_downlaod_report where  type_table='{$type_table}' and content_owner = '{$_SESSION['client']}' and selected_date='{$selected_date}' and type_cate='{$type_cate}' and downlaodType='withholding' limit 0,1 ";
     $resultQyery = runQuery($sql, $conn);
     $resultQyeryscheck = mysqli_num_rows($resultQyery["dbResource"]);
    

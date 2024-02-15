@@ -459,7 +459,7 @@
             if(file_exists('../../excelreports/'.$fileis)){?>
         <a href='../../excelreports/<?=$fileis?>'>Download zip</a>
         <?php }
-        ?>
+        ?><span class="text-mutes-sm">Please Export again for latest file</span> 
             </div>
             <div class="card-content">
 
@@ -489,10 +489,10 @@
                             $final_payable_wth_gst = $final_payable + ($final_payable * $gst_per /100);
                         ?>
                         <tr>
-                            <td>
-                                <input type="checkbox" name="act_id[]" class="delete_act"   value="<?php echo $clientDetails["id"]; ?>" /></td>
+                            <td><input type="checkbox" name="act_id[]" class="delete_act"
+                                    value="<?php echo $clientDetails["id"]; ?>" /></td>
                             <td><?php echo $clientDetails["content_owner"]; ?></td>
-                            <td><input type="text" value="<?php echo $clientDetails["total_amt_recd"] * 1; ?>" readonly></td>
+                            <td><?php echo $clientDetails["total_amt_recd"]; ?></td>
                             <td><?php echo $clientDetails["shares"]; ?></td>
                             <td><?php echo $clientDetails["amt_payable"]; ?></td>
                             <td><?php echo $clientDetails["us_payout"]; ?></td>
