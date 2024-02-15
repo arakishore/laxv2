@@ -1607,6 +1607,8 @@ function generateActicationCommonReportv4($sourcetable, $desinationtable, $conn)
         $updateQuery1 = "UPDATE {$desinationtable}  m JOIN(     SELECT         content_owner,
         AVG(holding_percentage) AS holding_percentage     FROM     {$sourcetable}  r where r.country='US'    GROUP BY         content_owner ) r ON     m.content_owner = r.content_owner SET     m.holding_percentage = r.holding_percentage";
 
+   
+            
         @unlink("polo_hodling_update1.txt");
         file_put_contents("polo_hodling_update1.txt", $updateQuery1);
         @chmod("polo_hodling_update1.txt", 0777);
@@ -1615,7 +1617,7 @@ function generateActicationCommonReportv4($sourcetable, $desinationtable, $conn)
 
         //new code 
     $result_des = array_map('strrev', explode('_', strrev($desinationtable)));
-    $nd_type = getNDTypes($result_des[2]);
+    //$nd_type = getNDTypes($result_des[2]);
 
         // update us current  data
         
@@ -1636,12 +1638,16 @@ function generateActicationCommonReportv4($sourcetable, $desinationtable, $conn)
 
         $updateQueryResult1 = runQuery($updateQuery1, $conn);
 
-   
-        $updateQuery2 = "UPDATE  {$desinationtable} a,crep_cms_clients b
-        set 
-        a.amt_payable=ROUND((a.shares * a.total_amt_recd)/100,8),
+   // new code slab range based shares percentage 
+   //we added code here so that by defalt all will update above as per main revenueShareYoutube 
+        update_sharespercentage($desinationtable,'revenueShareYoutube',$conn);
+   //end  new code slab range based shares percentage
+
+
+        $updateQuery2 = "UPDATE  {$desinationtable} a
+        set a.amt_payable=ROUND((a.shares * a.total_amt_recd)/100,8),
         a.final_payable= ROUND(((a.total_amt_recd - a.witholding) * a.shares / 100),8)
-        where b.client_username =a.content_owner   and b.`status` =1 ";
+         ";
 
         @unlink("polo_ACT_update2.txt");
         file_put_contents("polo_ACT_update2.txt", $updateQuery2);
@@ -1649,10 +1655,9 @@ function generateActicationCommonReportv4($sourcetable, $desinationtable, $conn)
 
         $updateQueryResult2 = runQuery($updateQuery2, $conn);
 
-        $updateQuery3 = "UPDATE  {$desinationtable} a,crep_cms_clients b
-		                set 
-                        a.final_payable_with_gst= ROUND(a.final_payable + (final_payable * gst_percentage / 100),8)
-                        where b.client_username =a.content_owner   and b.`status` =1 ";
+        $updateQuery3 = "UPDATE  {$desinationtable} a
+		                set a.final_payable_with_gst= ROUND(a.final_payable + (final_payable * gst_percentage / 100),8)
+                         ";
 
         @unlink("polo_ACT_update3.txt");
         file_put_contents("polo_ACT_update3.txt", $updateQuery3);
@@ -2807,4 +2812,45 @@ function addActualHoldingPercentageColumn($tableName, $conn)
 	} else {
 		return setErrorStack($returnArr, 3, $truncateTableQueryResult["errMsg"], null);
 	}
+}
+
+function update_sharespercentage($desinationtable,$share_for='',$conn){
+    $returnArr = array();
+    
+    if($share_for=="revenueShareYoutube"){
+        @unlink("polo_client_slab_percentage.txt");
+
+        $getClientInfoQuery  = "select * from {$desinationtable} ";
+        
+        $getClientInfoQueryResult = runQuery($getClientInfoQuery, $conn);
+        if (!noError($getClientInfoQueryResult)) {
+            return setErrorStack($returnArr, 3, $getClientInfoQueryResult["errMsg"], null);
+        }
+        $i=1;
+       
+        while ($row = mysqli_fetch_assoc($getClientInfoQueryResult["dbResource"])) {
+
+            $total_amt_recd = $row['total_amt_recd'];
+            $witholding = $row['witholding'];
+            $total_payable_amt = ceil($total_amt_recd - $witholding);
+
+            $sql = "select * from client_slab_percentage where client_username = '".$row['content_owner']."' and from_amt <= ".$total_payable_amt." and to_amt > ".$total_payable_amt ;
+
+        
+            file_put_contents("polo_client_slab_percentage.txt", $sql,FILE_APPEND);
+            @chmod("polo_client_slab_percentage.txt", 0777);
+            $client_slab_percentageResult = runQuery($sql, $conn);
+            $resultQyeryscheck = mysqli_num_rows($client_slab_percentageResult["dbResource"]);
+            if ($resultQyeryscheck > 0) {
+                $resultQyerydata = mysqli_fetch_assoc($client_slab_percentageResult["dbResource"]);
+                $percentage =$resultQyerydata['percentage'];
+                $updateQueryshare = "UPDATE  {$desinationtable} 
+                set shares = $percentage 
+                where content_owner  ='{$row['content_owner']}' ";
+                 $updateQueryResult2 = runQuery($updateQueryshare, $conn);
+            }
+    
+        }
+    }
+   
 }

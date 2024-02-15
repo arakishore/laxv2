@@ -146,8 +146,7 @@ if (!noError($conn)) {
                     }
                 } else {
                     if($type_table == "redmusic"){
-                        //, 'asset_title', 'asset_labels',  'Youtube payout', 'RevShare','USPAYOUT','WITHHOLDING', 'Final Payable','GST','Final Payable-GST', 'Channel'
-                        $headtitle = ['country', 'contentType', 'assetChannelID', 'videoID','AssetId','asset_labels','Youtube payout', 'RevShare','USPAYOUT','WITHHOLDING', 'Final Payable','GST','Final Payable-GST', 'Channel'];
+                        $headtitle = ['country', 'contentType', 'assetChannelID', 'videoID','AssetId', 'asset_title', 'asset_labels', 'Youtube payout', 'RevShare','USPAYOUT','WITHHOLDING', 'Final Payable','GST','Final Payable-GST', 'Channel'];
                     } else {
                         $headtitle = ['country', 'contentType', 'channelID', 'videoID', 'videoTitle','AssetId', 'Youtube payout', 'RevShare' ,'USPAYOUT','WITHHOLDING', 'Final Payable','GST','Final Payable-GST', 'Channel'];
                     }

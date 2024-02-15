@@ -213,6 +213,7 @@ function getClientsInfo(
 
     return setErrorStack($returnArr, -1, $res, null);
 }
+
 function getClientsInfo_showinfo(
     $fieldSearchArr = null,
     $fieldsStr = "",
@@ -283,6 +284,7 @@ function getClientsInfo_showinfo(
 
     return setErrorStack($returnArr, -1, $res, null);
 }
+
 function getClientsInfo_org(
     $fieldSearchArr = null,
     $fieldsStr = "",
@@ -512,6 +514,7 @@ function getAvilableActivateReports($type, $client, $conn)
 
     return setErrorStack($returnArr, -1, $res, null);
 }
+
 function getAvilableActivateReportsYoutubev2($type, $client, $conn)
 {
     $res = array();
@@ -1199,6 +1202,412 @@ function getPublisherReportv2(
 
             $res[] = $row;
         }
+    }
+
+    return setErrorStack($returnArr, -1, $res, null);
+}
+
+
+function getClientsSlab(
+        $conn,
+        $client_username=''
+    
+) {
+    $res = array();
+    $returnArr = array();
+    
+   
+
+    $getClientInfoQuery = "SELECT *  FROM client_slab_percentage WHERE client_username = '{$client_username}'";
+     
+
+    //echo $getClientInfoQuery;
+    $getClientInfoQueryResult = runQuery($getClientInfoQuery, $conn);
+    if (!noError($getClientInfoQueryResult)) {
+        return setErrorStack($returnArr, 3, $getClientInfoQueryResult["errMsg"], null);
+    }
+    $i=1;
+    while ($row = mysqli_fetch_assoc($getClientInfoQueryResult["dbResource"])) {
+       
+
+        $res[$i] = $row;
+        $i++;
+    }
+
+    return setErrorStack($returnArr, -1, $res, null);
+}
+
+function getClientsSlabViaGroupName(
+    $conn,
+  
+    $group_name=''
+
+) {
+$res = array();
+$returnArr = array();
+
+
+
+$getClientInfoQuery = "SELECT *  FROM client_slab_percentage WHERE group_name = '{$group_name}'";
+ 
+
+//echo $getClientInfoQuery;
+$getClientInfoQueryResult = runQuery($getClientInfoQuery, $conn);
+if (!noError($getClientInfoQueryResult)) {
+    return setErrorStack($returnArr, 3, $getClientInfoQueryResult["errMsg"], null);
+}
+$i=1;
+while ($row = mysqli_fetch_assoc($getClientInfoQueryResult["dbResource"])) {
+   
+
+    $res[$i] = $row;
+    $i++;
+}
+
+return setErrorStack($returnArr, -1, $res, null);
+}
+
+function slabGetClients(
+    $fieldSearchArr = null,
+    $fieldsStr = "",
+    $conn,
+    $offset = null,
+    $resultsPerPage = 10,
+    $orderBy = "group_name"
+) {
+    $res = array();
+    $returnArr = array();
+    $whereClause = "";
+
+    //looping through array passed to create another array of where clauses
+
+    foreach ($fieldSearchArr as $colName => $searchVal) {
+        if (!empty($whereClause)) {
+            $whereClause .= " AND ";
+        }
+
+        $whereClause .= "{$colName} like '%{$searchVal}%'";
+    }
+ 
+
+    if (empty($fieldsStr)) {
+        $fieldsStr = "*";
+    }
+
+    $getClientInfoQuery = "SELECT  {$fieldsStr} FROM client_slab_groups";
+    if (!empty($whereClause)) {
+        $getClientInfoQuery .= " WHERE {$whereClause}";
+    }
+
+    $getClientInfoQuery .= " ORDER BY " . $orderBy;
+    if ($offset !== null) {
+        $getClientInfoQuery .= " LIMIT {$offset}, {$resultsPerPage}";
+    }
+
+    //echo $getClientInfoQuery;
+    $getClientInfoQueryResult = runQuery($getClientInfoQuery, $conn);
+    if (!noError($getClientInfoQueryResult)) {
+        return setErrorStack($returnArr, 3, $getClientInfoQueryResult["errMsg"], null);
+    }
+
+    /* This function negotiates that an email must be fetched from the database. All client info is keyed by the client's email
+     *  However, in case an email is not desired, like in the case of fetching counts, a default email of "anonymous" will be used
+     */
+    while ($row = mysqli_fetch_assoc($getClientInfoQueryResult["dbResource"])) {
+        
+
+        $res[] = $row;
+    }
+
+    return setErrorStack($returnArr, -1, $res, null);
+}
+
+
+function getClientsGroup(
+    $conn,
+    $group_name=''
+
+) {
+$res = array();
+$returnArr = array();
+
+
+
+$getClientInfoQuery = "SELECT *  FROM client_slab_groups WHERE group_name = '{$group_name}'";
+ 
+
+//echo $getClientInfoQuery;
+$getClientInfoQueryResult = runQuery($getClientInfoQuery, $conn);
+if (!noError($getClientInfoQueryResult)) {
+    return setErrorStack($returnArr, 3, $getClientInfoQueryResult["errMsg"], null);
+}
+$i=1;
+while ($row = mysqli_fetch_assoc($getClientInfoQueryResult["dbResource"])) {
+   
+
+    $res = $row;
+    $i++;
+}
+
+return setErrorStack($returnArr, -1, $res, null);
+}
+
+
+function deleteClientGroup($clientSearchArr, $conn)
+{
+    $returnArr = array();
+    $whereClause = "";
+
+    if (empty($clientSearchArr)) {
+        return setErrorStack($returnArr, 4, getErrMsg(4) . " Array to search cannot be empty", null);
+    }
+
+    //looping through array passed to create another array of where clauses
+    foreach ($clientSearchArr as $colName => $searchVal) {
+        if (!empty($whereClause)) {
+            $whereClause .= " AND ";
+        }
+
+        $whereClause .= "{$colName} = {$searchVal}";
+    }
+
+    $deleteClientInfoQuery1 = "DELETE FROM client_slab_group_content_owner";
+    if (!empty($whereClause)) {
+        $deleteClientInfoQuery1 .= " WHERE {$whereClause}";
+    }
+
+    $deleteClientInfoQueryResult1 = runQuery($deleteClientInfoQuery1, $conn);
+
+    $deleteClientInfoQuery2 = "DELETE FROM client_slab_groups";
+    if (!empty($whereClause)) {
+        $deleteClientInfoQuery2 .= " WHERE {$whereClause}";
+    }
+
+    $deleteClientInfoQueryResult2 = runQuery($deleteClientInfoQuery2, $conn);
+
+  
+    $deleteClientInfoQuery3 = "DELETE FROM client_slab_percentage";
+    if (!empty($whereClause)) {
+        $deleteClientInfoQuery3 .= " WHERE {$whereClause}";
+    }
+
+    $deleteClientInfoQueryResult3 = runQuery($deleteClientInfoQuery3, $conn);
+
+    if (!noError($deleteClientInfoQueryResult3)) {
+        return setErrorStack($returnArr, 3, $deleteClientInfoQueryResult3["errMsg"], null);
+    }
+
+    return setErrorStack($returnArr, -1, getErrMsg(-1), null);
+
+}
+
+
+function updateContent_ownerGroupNameInfo($arrToUpdate = null, $fieldSearchArr = null,$content_owner=[],$clientInfo=[], $conn=null)
+{
+    $res = array();
+    $returnArr = array();
+
+    if (empty($arrToUpdate)) {
+        return setErrorStack($returnArr, 4, getErrMsg(4) . " Array to update cannot be empty", null);
+    }
+    if (empty($fieldSearchArr)) {
+        return setErrorStack($returnArr, 4, getErrMsg(4) . " Array to search cannot be empty", null);
+    }
+
+    if (empty($content_owner)) {
+        return setErrorStack($returnArr, 4, getErrMsg(4) . " Array to content_owner cannot be empty", null);
+    }
+
+    
+    
+    $setClause = "";
+    $whereClause = "";
+
+    //looping through array passed to create another array of where clauses
+    foreach ($fieldSearchArr as $colName => $searchVal) {
+        if (!empty($whereClause)) {
+            $whereClause .= " AND ";
+        }
+
+        $whereClause .= "{$colName} = '{$searchVal}'";
+    }
+
+
+
+
+    //looping through array passed to create another array of where clauses
+    foreach ($arrToUpdate as $colName => $setVal) {
+        if (!empty($setClause)) {
+            $setClause .= ", ";
+        }
+
+        $setClause .= "{$colName} = '{$setVal}'";
+    }
+    $updateClientQuery = "UPDATE client_slab_groups SET {$setClause} WHERE {$whereClause}";
+    $updateClientQueryResult = runQuery($updateClientQuery, $conn);
+
+    $deleteClientInfoQuery = "delete from client_slab_group_content_owner where group_name='{$clientInfo['group_name']}' ";
+    $deleteClientInfoQueryResult = runQuery($deleteClientInfoQuery, $conn);
+    foreach($content_owner as $key => $value){
+        $param['content_owner'] = trim($value);
+        $param['group_name'] = $clientInfo['group_name'];
+        $param['group_id'] = $clientInfo['id'];
+        
+        $keys = array();
+		$values = array();
+	
+        foreach ($param as $key=>$val) {
+            $value = mysqli_real_escape_string($conn, $val);
+            $keys[] = "`".$key."`";
+            $values[] = "'{$val}'";
+        }
+    
+          //echo "<br>\n".
+            $query = "INSERT INTO client_slab_group_content_owner (" . implode(",", $keys) . ") VALUES (" . implode(",", $values) . ")";
+            $queryresult = runQuery($query, $conn);
+    }
+
+    if (noError($updateClientQueryResult)) {
+        return setErrorStack($returnArr, -1, $res, null);
+    } else {
+        return setErrorStack($returnArr, 3, $updateClientQueryResult["errMsg"], null);
+    }
+}
+
+
+function createContent_ownerGroupNameInfo($group_name='', $clientArr=null, $fieldsStr=null,$content_owner=[], $conn=null)
+{
+    $res = array();
+    $returnArr = array();
+    if (empty($group_name)) {
+        return setErrorStack($returnArr, 4, getErrMsg(4) . " group_name cannot be empty", null);
+    }
+    if (empty($clientArr)) {
+        return setErrorStack($returnArr, 4, getErrMsg(4) . " Array to insert cannot be empty", null);
+    }
+    if (empty($fieldsStr)) {
+        return setErrorStack($returnArr, 4, getErrMsg(4) . " Fields String cannot be empty", null);
+    }
+
+    $allValuesStr = "";
+    $insertClientQuery = "INSERT INTO client_slab_groups ({$fieldsStr}) VALUES ";
+    foreach ($clientArr as $userName => $clientDetails) {
+        if (!empty($valuesStr)) {
+            $allValuesStr .= ",";
+        }
+        $valuesStr = "";
+        foreach ($clientDetails as $colName => $value) {
+            $valuesStr .= $value . ",";
+        }
+        $valuesStr = rtrim($valuesStr, ",");
+        $allValuesStr .= "({$valuesStr})";
+    }
+    $insertClientQuery .= $allValuesStr;
+
+  
+    $insertClientQueryResult = runQuery($insertClientQuery, $conn);
+
+    $clientInfo = getClientsGroup($conn,$group_name);
+    $clientInfo = $clientInfo['errMsg'];
+    
+
+ 
+    foreach($content_owner as $key => $value){
+        $param = [];
+        $values = [];
+        $keys = [];
+
+        $param['content_owner'] = $value;
+        $param['group_name'] = $clientInfo['group_name'];
+        $param['group_id'] = $clientInfo['id'];
+      
+        foreach ($param as $key=>$val) {
+            $value = mysqli_real_escape_string($conn, $val);
+            $keys[] = "`".$key."`";
+            $values[] = "'{$val}'";
+        }
+    
+        //echo "<br>\n".
+            $query = "INSERT INTO client_slab_group_content_owner (" . implode(",", $keys) . ") VALUES (" . implode(",", $values) . ")";
+            $queryresult = runQuery($query, $conn);
+    }
+
+ 
+    if (noError($insertClientQueryResult)) {
+        return setErrorStack($returnArr, -1, $res, null);
+    } else {
+        return setErrorStack($returnArr, 3, $insertClientQueryResult["errMsg"], null);
+    }
+}
+
+
+
+function getClientsSlabInfo(
+    $fieldSearchArr = null,
+    $fieldsStr = "",
+    $dateField = null,
+    $conn,
+    $offset = null,
+    $resultsPerPage = 10,
+    $orderBy = "client_username"
+) {
+    $res = array();
+    $returnArr = array();
+    $whereClause = "";
+
+    //looping through array passed to create another array of where clauses
+
+    foreach ($fieldSearchArr as $colName => $searchVal) {
+        if (!empty($whereClause)) {
+            $whereClause .= " AND ";
+        }
+
+        $whereClause .= "{$colName} like '%{$searchVal}%'";
+    }
+
+    if ($dateField !== null) {
+        if (!isset($dateField["fromDate"]) || empty($dateField["fromDate"])) {
+            return setErrorStack($returnArr, 7, "Date Field missing from date", null);
+        }
+        if (!isset($dateField["toDate"]) || empty($dateField["toDate"])) {
+            return setErrorStack($returnArr, 7, "Date Field missing to date", null);
+        }
+        if (!empty($whereClause)) {
+            $whereClause .= " AND ";
+        }
+
+        $whereClause .= "inception_date BETWEEN '{$dateField["fromDate"]}' AND '{$dateField["toDate"]}'";
+    }
+
+    if (empty($fieldsStr)) {
+        $fieldsStr = "*";
+    }
+
+    $getClientInfoQuery = "SELECT  {$fieldsStr},client_id FROM crep_cms_clients";
+    if (!empty($whereClause)) {
+        $getClientInfoQuery .= " WHERE {$whereClause}";
+    }
+
+    $getClientInfoQuery .= " ORDER BY " . $orderBy;
+    if ($offset !== null) {
+        $getClientInfoQuery .= " LIMIT {$offset}, {$resultsPerPage}";
+    }
+
+    //echo $getClientInfoQuery;
+    $getClientInfoQueryResult = runQuery($getClientInfoQuery, $conn);
+    if (!noError($getClientInfoQueryResult)) {
+        return setErrorStack($returnArr, 3, $getClientInfoQueryResult["errMsg"], null);
+    }
+
+    /* This function negotiates that an email must be fetched from the database. All client info is keyed by the client's email
+     *  However, in case an email is not desired, like in the case of fetching counts, a default email of "anonymous" will be used
+     */
+    while ($row = mysqli_fetch_assoc($getClientInfoQueryResult["dbResource"])) {
+        if (!isset($row["client_id"])) {
+            $row["client_id"] = "anonymous";
+        }
+
+        $res[$row["client_id"]] = $row;
     }
 
     return setErrorStack($returnArr, -1, $res, null);

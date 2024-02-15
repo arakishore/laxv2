@@ -57,6 +57,13 @@ else
         exit;
     }
 
+    if ($_POST["type"] == "youtube_whp_report")
+    {
+        $table_name = 'youtube_whp_report_'.$nd.'_'.$year.'_'.$month; ;
+        $controller = 'exportyouTube_withholding_percentage_report_v2.php.php'; 
+    }
+
+
     if ($_POST["type"] == "youtube_labelengine_report")
     {
         $table_name = 'youtube_labelengine_report_'.$nd.'_'.$year.'_'.$month; ;

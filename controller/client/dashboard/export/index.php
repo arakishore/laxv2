@@ -121,6 +121,20 @@ if (!noError($conn)) {
         $table_type_name  = 'report_audio_'.$type_table.'_'.$year.'_'.$month;
     }
     
+    //cmg
+    if ($_POST["type"] == "main_non_cmg") {
+        $title_name = "Publisher Non CMG Main";
+        $controller = 'exportReportMain_non_cmgv2.php';
+        $table_type_name = 'report_publishing_'.$type_table.'_' . $year . '_' . $month;
+    }
+    
+    if ($_POST["type"] == "redsubscription_non_cmg") {
+        $title_name = "Publisher Non CMG (Red/Subscription)";
+        $controller = 'exportReportRedSubscription_non_cmgv2.php';
+        $table_type_name = 'report_publishing_'.$type_table.'_' . $year . '_' . $month;
+    }
+    
+
     $reporttime = $_POST["selected_date"];
     $client = $_SESSION["client"];
 
