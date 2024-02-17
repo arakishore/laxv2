@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Feb 17, 2024 at 08:23 AM
+-- Generation Time: Feb 17, 2024 at 08:22 AM
 -- Server version: 8.0.18
 -- PHP Version: 7.3.15
 
@@ -19,7 +19,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `nirvana_digital_v2`
+-- Database: `nirvana_digital_v10`
 --
 
 -- --------------------------------------------------------
@@ -80,25 +80,25 @@ CREATE TABLE `activity_downlaod_report` (
 DROP TABLE IF EXISTS `activity_downlaod_report_test`;
 CREATE TABLE `activity_downlaod_report_test` (
   `id` int(11) NOT NULL,
-  `content_owner` varchar(150) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `email` varchar(150) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `content_owner` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `email` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `type_table` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `date_start` datetime DEFAULT NULL,
   `date_end` datetime DEFAULT NULL,
   `process_date_start` datetime DEFAULT NULL,
   `status_flag` tinyint(1) DEFAULT NULL,
-  `status_message` varchar(512) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status_message` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `date_added` datetime DEFAULT NULL,
-  `table_name` varchar(150) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `table_name` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `file_name` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `table_type_name` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `process_id` varchar(15) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `status_name` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `param_data` text COLLATE utf8mb4_general_ci,
-  `selected_date` varchar(15) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `controller_name` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `table_type_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `process_id` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status_name` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `param_data` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `selected_date` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `controller_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `type_cate` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `title_name` varchar(128) COLLATE utf8mb4_general_ci DEFAULT NULL
+  `title_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -130,9 +130,9 @@ CREATE TABLE `activity_reports` (
 DROP TABLE IF EXISTS `atemp_label_content_owner`;
 CREATE TABLE `atemp_label_content_owner` (
   `id` int(11) NOT NULL,
-  `label` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `content_owner` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `cms` varchar(11) COLLATE utf8mb4_general_ci DEFAULT NULL
+  `label` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `content_owner` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `cms` varchar(11) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -144,8 +144,8 @@ CREATE TABLE `atemp_label_content_owner` (
 DROP TABLE IF EXISTS `a_temp_itune_label`;
 CREATE TABLE `a_temp_itune_label` (
   `id` int(11) NOT NULL,
-  `label` varchar(150) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `client` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL
+  `label` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `client` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -265,6 +265,33 @@ CREATE TABLE `channel_co_map_import` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `client_slab_groups`
+--
+
+DROP TABLE IF EXISTS `client_slab_groups`;
+CREATE TABLE `client_slab_groups` (
+  `id` int(11) NOT NULL,
+  `group_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `content_owner` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `client_slab_group_content_owner`
+--
+
+DROP TABLE IF EXISTS `client_slab_group_content_owner`;
+CREATE TABLE `client_slab_group_content_owner` (
+  `id` int(11) NOT NULL,
+  `group_id` int(11) DEFAULT NULL,
+  `group_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `content_owner` varchar(55) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `client_slab_percentage`
 --
 
@@ -272,12 +299,14 @@ DROP TABLE IF EXISTS `client_slab_percentage`;
 CREATE TABLE `client_slab_percentage` (
   `id` int(11) NOT NULL,
   `client_id` int(11) NOT NULL DEFAULT '0',
-  `client_username` varchar(255) NOT NULL,
-  `slab_for` varchar(15) DEFAULT 'Share Youtube',
+  `client_username` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `slab_for` varchar(15) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT 'Share Youtube',
   `from_amt` decimal(20,2) NOT NULL,
   `to_amt` decimal(20,2) NOT NULL,
-  `percentage` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `percentage` int(11) NOT NULL,
+  `group_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `group_id` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -549,7 +578,7 @@ CREATE TABLE `crep_cms_user_backup` (
 
 DROP TABLE IF EXISTS `deleteme`;
 CREATE TABLE `deleteme` (
-  `asset_id` varchar(255) COLLATE utf8mb4_general_ci NOT NULL
+  `asset_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -585,9 +614,9 @@ CREATE TABLE `monthly_rate_saavan_gaana_other` (
   `status_activation` int(11) DEFAULT NULL COMMENT '1: activation table created so it should not be updated or deleted',
   `date_added` datetime DEFAULT NULL,
   `date_edit` datetime DEFAULT NULL,
-  `free_playout_revenue` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `paid_playout_revenue` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `ndtype` varchar(15) COLLATE utf8_unicode_ci DEFAULT NULL
+  `free_playout_revenue` varchar(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `paid_playout_revenue` varchar(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `ndtype` varchar(15) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
@@ -632,7 +661,21 @@ CREATE TABLE `newreport_bk` (
 
 DROP TABLE IF EXISTS `onlyvideoid`;
 CREATE TABLE `onlyvideoid` (
-  `video_id` varchar(255) COLLATE utf8mb4_general_ci NOT NULL
+  `video_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `slab_report_status`
+--
+
+DROP TABLE IF EXISTS `slab_report_status`;
+CREATE TABLE `slab_report_status` (
+  `id` int(11) NOT NULL,
+  `for_month` date DEFAULT NULL,
+  `table_type` varchar(24) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `date_added` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -724,6 +767,22 @@ ALTER TABLE `channel_co_mapping_original`
 --
 ALTER TABLE `channel_co_map_import`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `client_slab_groups`
+--
+ALTER TABLE `client_slab_groups`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `group_name_2` (`group_name`),
+  ADD KEY `group_name` (`group_name`);
+
+--
+-- Indexes for table `client_slab_group_content_owner`
+--
+ALTER TABLE `client_slab_group_content_owner`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `group_name` (`group_name`),
+  ADD KEY `content_owner` (`content_owner`);
 
 --
 -- Indexes for table `client_slab_percentage`
@@ -831,6 +890,12 @@ ALTER TABLE `newreport_bk`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `slab_report_status`
+--
+ALTER TABLE `slab_report_status`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -898,6 +963,18 @@ ALTER TABLE `channel_co_mapping_original`
 -- AUTO_INCREMENT for table `channel_co_map_import`
 --
 ALTER TABLE `channel_co_map_import`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `client_slab_groups`
+--
+ALTER TABLE `client_slab_groups`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `client_slab_group_content_owner`
+--
+ALTER TABLE `client_slab_group_content_owner`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -994,6 +1071,12 @@ ALTER TABLE `monthly_rate_saavan_gaana_other`
 -- AUTO_INCREMENT for table `newreport_bk`
 --
 ALTER TABLE `newreport_bk`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `slab_report_status`
+--
+ALTER TABLE `slab_report_status`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 COMMIT;
 
